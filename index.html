@@ -727,41 +727,47 @@
                 ual('ctrl', 'start');
             })();
         </script>
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // ページ読み込みを待つ
-    window.addEventListener('DOMContentLoaded', () => {
-        // Supabaseライブラリが読み込まれたか確認
+    // ブラウザの全ての読み込みが終わった後に実行
+    window.addEventListener('load', () => {
+        // 二重定義防止とライブラリチェック
         if (typeof supabase === 'undefined') {
-            console.error("Supabaseライブラリ自体が読み込めていません");
+            console.error("Supabaseライブラリが読み込めていません");
             return;
         }
 
-        // 変数名を 'sb' に変更して競合を回避
+        // クライアントの作成（変数名を sb に固定）
         const sb = supabase.createClient(
             "https://qfzyrogwyjbzbblnvqzy.supabase.co", 
             "sb_publishable_tXLLvKe_L-27OsGU-GH3Zw_176oxBqw"
         );
 
+        // 検索ボックスの取得
         const searchInput = document.querySelector('input[name="p"]');
         
         if (searchInput) {
             searchInput.addEventListener("input", async (e) => {
                 const keyword = e.target.value;
-                if (keyword.length > 0) {
+                if (keyword && keyword.trim().length > 0) {
                     try {
-                        // 変更した変数名 'sb' を使用
-                        await sb
+                        const { error } = await sb
                             .from('search_logs')
                             .insert([{ keyword: keyword }]);
-                        console.log("送信成功:", keyword);
+                        
+                        if (error) {
+                            console.error("データ送信エラー:", error.message);
+                        } else {
+                            console.log("送信成功:", keyword);
+                        }
                     } catch (err) {
-                        console.error("送信エラー:", err);
+                        console.error("予期せぬエラー:", err);
                     }
                 }
             });
+            console.log("監視システムが起動しました");
+        } else {
+            console.error("検索ボックスが見つかりません");
         }
     });
 </script>
