@@ -729,41 +729,41 @@
         </script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // ライブラリの読み込みを待ってから実行する仕組み
-    window.addEventListener('load', () => {
-        try {
-            // supabase.createClient が存在するか確認
-            if (typeof supabase === 'undefined') {
-                console.error("Supabaseライブラリが読み込めていません");
-                return;
-            }
+    // ページ読み込みを待つ
+    window.addEventListener('DOMContentLoaded', () => {
+        // Supabaseライブラリが読み込まれたか確認
+        if (typeof supabase === 'undefined') {
+            console.error("Supabaseライブラリ自体が読み込めていません");
+            return;
+        }
 
-            const SUPABASE_URL = "https://qfzyrogwyjbzbblnvqzy.supabase.co";
-            const SUPABASE_ANON_KEY = "sb_publishable_tXLLvKe_L-27OsGU-GH3Zw_176oxBqw";
-            const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // 変数名を 'sb' に変更して競合を回避
+        const sb = supabase.createClient(
+            "https://qfzyrogwyjbzbblnvqzy.supabase.co", 
+            "sb_publishable_tXLLvKe_L-27OsGU-GH3Zw_176oxBqw"
+        );
 
-            const searchInput = document.querySelector('input[name="p"]');
-            
-                if (searchInput) {
-                    searchInput.addEventListener("input", async (e) => {
-                       const keyword = e.target.value;
-                        if (keyword.length > 0) {
-                            try {
-                                await client
-                                    .from('search_logs')
-                                    .insert([{ keyword: keyword }]);
-                                console.log("送信成功:", keyword);
-                            } catch (err) {
-                                console.error("送信エラー:", err);
-                            }
-                        }
-                    });
+        const searchInput = document.querySelector('input[name="p"]');
+        
+        if (searchInput) {
+            searchInput.addEventListener("input", async (e) => {
+                const keyword = e.target.value;
+                if (keyword.length > 0) {
+                    try {
+                        // 変更した変数名 'sb' を使用
+                        await sb
+                            .from('search_logs')
+                            .insert([{ keyword: keyword }]);
+                        console.log("送信成功:", keyword);
+                    } catch (err) {
+                        console.error("送信エラー:", err);
+                    }
                 }
-            } catch (err) {
-                console.error("初期化失敗:", err);
-            }
-        });
-    </script>
+            });
+        }
+    });
+</script>
     </body>
 </html>
