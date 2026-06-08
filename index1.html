@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>検索ログ監視画面</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #log-container { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
+        .log-item { padding: 5px; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+    <h1>リアルタイム検索ログ</h1>
+    <div id="log-container">
+        </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        window.addEventListener('load', () => {
+            const sb = supabase.createClient(
+                "https://qfzyrogwyjbzbblnvqzy.supabase.co", 
+                "sb_publishable_tXLLvKe_L-27OsGU-GH3Zw_176oxBqw"
+            );
+
+            const container = document.getElementById('log-container');
+
+            // リアルタイム接続
+            sb.channel('any')
+              .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'search_logs' }, payload => {
+                  const div = document.createElement('div');
+                  div.className = 'log-item';
+                  div.textContent = "検索ワード: " + payload.new.keyword;
+                  container.prepend(div); // 最新を上に表示
+              })
+              .subscribe();
+        });
+    </script>
+</body>
+</html>
