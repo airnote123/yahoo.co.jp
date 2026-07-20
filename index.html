@@ -59,7 +59,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-bold bg-gradient-to-r from-slate-950 to-slate-800 bg-clip-text text-transparent">串刺し採点 - Kushizashi Grade Pro</h1>
-                <p class="text-xs text-slate-400 font-medium">同一設問の一括連続スピード採点 & アノテーション生成</p>
+                <p class="text-xs text-slate-400 font-medium">同一設問の全員分一括連続スピード採点 & アノテーション生成</p>
             </div>
         </div>
 
@@ -98,7 +98,7 @@
                 
                 <button id="tab-btn-grading" onclick="switchTab('grading')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                    <span>3. 串刺し採点</span>
+                    <span>3. 串刺し一括採点</span>
                 </button>
                 
                 <button id="tab-btn-exports" onclick="switchTab('exports')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200">
@@ -143,7 +143,7 @@
                                 </div>
                                 <div>
                                     <p class="text-base font-bold text-slate-800">ファイルをドラッグ＆ドロップ</p>
-                                    <p class="text-xs text-slate-400 mt-1">またはコンピュータからファイルを選択 (複数選択可、iPadの場合はファイルを選択)</p>
+                                    <p class="text-xs text-slate-400 mt-1">またはコンピュータからファイルを選択 (複数選択可)</p>
                                 </div>
                             </div>
                         </div>
@@ -254,141 +254,42 @@
                 </div>
             </section>
 
-            <!-- ================= SCREEN 3: KUSHIZASHI GRADING WORKSPACE ================= -->
-            <section id="screen-grading" class="flex-1 flex flex-col md:flex-row overflow-hidden hidden">
-                <!-- Left Grading Sidebar: Questions & Stats -->
-                <div class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
-                    <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-                        <span class="text-xs font-bold text-slate-400 block uppercase">現在の採点対象の設問</span>
-                        <select id="grading-question-selector" onchange="onGradingQuestionChanged()" class="w-full mt-2 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 font-bold text-slate-800">
-                            <!-- Question selections injected here -->
-                        </select>
+            <!-- ================= SCREEN 3: KUSHIZASHI GRADING WORKSPACE (Reworked) ================= -->
+            <section id="screen-grading" class="flex-1 flex flex-col overflow-hidden hidden">
+                <!-- Top Question Picker Bar -->
+                <div class="bg-white px-6 py-4 border-b border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4 z-10 flex-shrink-0">
+                    <div class="flex items-center space-x-4">
+                        <div>
+                            <span class="text-xs font-bold text-slate-400 block uppercase">採点する対象の設問（串刺し採点）</span>
+                            <select id="grading-question-selector" onchange="onGradingQuestionChanged()" class="mt-1 block w-64 px-3 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                                <!-- Question options -->
+                            </select>
+                        </div>
+                        
+                        <!-- Scale controls for croppings -->
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold text-slate-400 block mb-1">解答用紙の拡大率</span>
+                            <div class="flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                                <button onclick="adjustGradingScale(0.85)" class="px-2 py-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="縮小">縮小 (-)</button>
+                                <button onclick="adjustGradingScale(1.15)" class="px-2 py-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="拡大">拡大 (+)</button>
+                                <span id="grading-scale-indicator" class="text-[10px] text-slate-500 font-mono font-semibold px-2">100%</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Students Quick Jump List with Grading Status -->
-                    <div class="flex-1 overflow-y-auto p-3 custom-scrollbar space-y-1" id="grading-student-list">
-                        <!-- Student grading statuses injected here -->
+                    <!-- Progress Badge -->
+                    <div class="flex items-center space-x-3 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-xl">
+                        <span class="text-xs text-indigo-500 font-bold">この設問の採点進捗:</span>
+                        <div class="w-32 bg-indigo-200 h-2.5 rounded-full overflow-hidden">
+                            <div id="grading-progress-bar" class="bg-indigo-600 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <span id="grading-progress-text" class="text-xs text-indigo-700 font-bold font-mono">0/0 (0%)</span>
                     </div>
                 </div>
 
-                <!-- Center/Right Kushizashi Arena -->
-                <div class="flex-1 flex flex-col overflow-hidden">
-                    
-                    <!-- Student Navigation Header -->
-                    <div class="bg-white px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 flex-shrink-0 shadow-sm z-10">
-                        <div class="flex items-center space-x-3">
-                            <button onclick="prevStudent()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-xs font-bold">
-                                &larr; 前の生徒 (A / ⇧+Tab)
-                            </button>
-                            <div class="text-center">
-                                <span class="text-xs text-slate-400 block font-semibold">採点中の答案</span>
-                                <h3 id="grading-current-student-name" class="text-base font-bold text-slate-900 leading-tight">未選択</h3>
-                            </div>
-                            <button onclick="nextStudent()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-xs font-bold">
-                                次の生徒 (D / Tab)
-                            </button>
-                        </div>
-
-                        <!-- Scale controls for active workspace -->
-                        <div class="flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                            <button onclick="adjustGradingScale(0.85)" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="縮小">縮小 (-)</button>
-                            <button onclick="fitGradingWidth()" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="幅に合わせる">幅合わせ</button>
-                            <button onclick="fitGradingHeight()" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="全体を表示">全体</button>
-                            <button onclick="adjustGradingScale(1.15)" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="拡大">拡大 (+)</button>
-                        </div>
-
-                        <div class="flex items-center space-x-3 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-xl">
-                            <span class="text-xs text-indigo-500 font-bold">全体進捗:</span>
-                            <div class="w-24 bg-indigo-200 h-2 rounded-full overflow-hidden">
-                                <div id="grading-progress-bar" class="bg-indigo-600 h-full w-0 transition-all duration-300"></div>
-                            </div>
-                            <span id="grading-progress-text" class="text-xs text-indigo-700 font-bold font-mono">0/0 (0%)</span>
-                        </div>
-                    </div>
-
-                    <!-- Work Panel (Canvas Crop View + Score Inputs) -->
-                    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden bg-slate-100">
-                        
-                        <!-- Left Panel: Interactive Grader Canvas -->
-                        <div class="flex-1 flex flex-col overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-200">
-                            <div class="p-3 bg-slate-800 text-slate-300 text-xs flex justify-between items-center flex-shrink-0">
-                                <span class="font-medium">解答欄アノテーションエディタ（スタンプを1本指タッチ/ドラッグで直感的に移動できます）</span>
-                                <span class="bg-slate-700 px-2 py-0.5 rounded font-mono text-rose-400 font-bold" id="canvas-zoom-status">100% 表示</span>
-                            </div>
-                            
-                            <!-- PDF viewport that supports multi-directional scrolling and dragging inside -->
-                            <div class="flex-1 overflow-auto p-4 flex justify-center items-center custom-scrollbar" id="grading-canvas-container">
-                                <div class="relative shadow-2xl rounded-xl border-4 border-slate-300/40 bg-white overflow-hidden" id="grading-canvas-wrapper" style="user-select: none;">
-                                    <canvas id="grading-pdf-canvas" class="block"></canvas>
-                                    <canvas id="grading-interactive-overlay" class="absolute top-0 left-0 w-full h-full cursor-crosshair touch-none"></canvas>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Panel: Scoring Action Deck -->
-                        <div class="w-full lg:w-80 bg-white flex flex-col flex-shrink-0 overflow-y-auto custom-scrollbar">
-                            <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">採点スタンプ操作</h4>
-                            </div>
-
-                            <div class="p-4 flex-1 space-y-4">
-                                <!-- Score buttons grid -->
-                                <div>
-                                    <span class="text-xs font-bold text-slate-400 block mb-2">クイック配点</span>
-                                    <div class="grid grid-cols-3 gap-2" id="quick-score-buttons">
-                                        <!-- Will render buttons like Full, Half, 0 -->
-                                    </div>
-                                </div>
-
-                                <!-- Manual Score Input -->
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-400 mb-2">点数入力</label>
-                                    <div class="flex items-center space-x-2">
-                                        <input type="number" id="manual-score-input" step="0.5" min="0" placeholder="0" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-lg font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20" oninput="validateManualScoreInput()">
-                                        <span class="text-sm text-slate-400 font-bold">/</span>
-                                        <span id="manual-score-max" class="text-base font-bold text-slate-600">10 点</span>
-                                    </div>
-                                </div>
-
-                                <!-- Placement Coordinates -->
-                                <div class="space-y-2">
-                                    <span class="text-xs font-bold text-slate-400 block">採点スタンプ生成（自動）</span>
-                                    <div class="p-3 bg-rose-50/50 border border-rose-100/60 rounded-xl space-y-2">
-                                        <div class="flex items-center justify-between text-xs">
-                                            <span class="text-slate-500 font-medium">1. 正誤判定印:</span>
-                                            <span id="stamp-indicator-icon" class="font-bold text-rose-600 font-mono">-</span>
-                                        </div>
-                                        <div class="flex items-center justify-between text-xs">
-                                            <span class="text-slate-500 font-medium">2. 得点欄印 (四角枠):</span>
-                                            <span id="stamp-indicator-box" class="font-bold text-rose-600 font-mono">-</span>
-                                        </div>
-                                    </div>
-                                    <p class="text-[11px] text-slate-400 leading-relaxed">※点数に応じたスタンプが自動描画されます。iPadでもドラッグして各スタンプの位置を自由に変更できます。</p>
-                                </div>
-
-                                <!-- Score Stamp Coordinates & Placement Controls -->
-                                <div class="pt-2 border-t border-slate-100 space-y-2">
-                                    <span class="text-xs font-bold text-slate-400 block">スタンプ描画配置</span>
-                                    <div class="grid grid-cols-2 gap-1.5 text-xs">
-                                        <button onclick="resetStampPositions('top-right')" class="py-1.5 border border-slate-200 hover:bg-slate-50 rounded font-medium text-slate-600">右上固定</button>
-                                        <button onclick="resetStampPositions('center')" class="py-1.5 border border-slate-200 hover:bg-slate-50 rounded font-medium text-slate-600">中央固定</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Grade Commit Action -->
-                            <div class="p-4 bg-slate-50 border-t border-slate-100 mt-auto">
-                                <button onclick="commitGrading()" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl shadow-md hover:bg-rose-500 hover:shadow-lg transition-all flex items-center justify-center space-x-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                                    <span>採点を確定して保存</span>
-                                </button>
-                                <div class="mt-2 text-center">
-                                    <span class="text-[10px] text-slate-400 font-medium font-mono">確定・移動ショートカット: Enter / Space</span>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
+                <!-- Vertical Skewered Student Workspace Grid -->
+                <div class="flex-1 overflow-y-auto p-6 bg-slate-100 custom-scrollbar space-y-6" id="skewered-workspace-container">
+                    <!-- Dynamic Rows of all Students for the selected question will render here -->
                 </div>
             </section>
 
@@ -403,7 +304,7 @@
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </div>
                             <div>
-                                <span class="text-xs text-slate-400 block font-bold uppercase">採点進捗率</span>
+                                <span class="text-xs text-slate-400 block font-bold uppercase">全体採点進捗率</span>
                                 <h4 id="stat-progress" class="text-xl font-black text-slate-900">0.0%</h4>
                             </div>
                         </div>
@@ -438,9 +339,9 @@
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     <span>答案PDFにアノテーションを書き出す</span>
                                 </div>
-                                <p class="text-xs text-slate-500 leading-relaxed">採点した「○」「△（点数入り）」「✓」「得点四角枠」を答案PDFの上に鮮明な赤インク風スタンプとして合成します。</p>
+                                <p class="text-xs text-slate-500 leading-relaxed">採点した「○（二重丸）」「△（数字入り三角形）」「✓（チェック）」「得点四角枠（数字入り）」を答案PDFの上に鮮明な赤インク風スタンプとして合成します。</p>
                                 <button onclick="exportGradedPDFs()" class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition-all shadow-sm">
-                                    丸バツ入り採点後PDFを出力
+                                    丸バツ・四角得点入りPDFを一括DL
                                 </button>
                             </div>
 
@@ -525,13 +426,12 @@
 
             // Kushizashi Workspace States (Screen 3)
             activeQuestionId: null,
-            activeStudentIndex: 0,
-            gradingScale: 1.5,     // Zoom scale for grading
+            gradingScale: 1.2,     // Zoom scale for grading croppings
 
-            // Canvas states
-            activeStampDragging: false,
-            activeStampType: null, // 'grade' or 'scorebox'
-            stampOffset: { x: 0, y: 0 }
+            // Canvas states for dynamic interaction
+            draggingStampStudentId: null,
+            draggingStampType: null, // 'grade' or 'scorebox'
+            draggingStampOffset: { x: 0, y: 0 }
         };
 
         // UI Toast Controller
@@ -601,7 +501,6 @@
                         const cleanName = file.name.replace(/\.[^/.]+$/, ""); // strip extension
 
                         try {
-                            // Using sliced copy to prevent PDF.js thread detachment
                             const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(fileData.slice(0)) });
                             const pdf = await loadingTask.promise;
                             
@@ -613,7 +512,6 @@
                                 pageCount: pdf.numPages
                             });
 
-                            // Initialize empty grade structure for this student
                             AppState.grades[studentId] = {};
                         } catch (err) {
                             console.error("Error reading PDF:", err);
@@ -776,7 +674,6 @@
                 const canvas = document.getElementById('pdf-template-canvas');
                 const context = canvas.getContext('2d');
 
-                // Responsive dynamic scaling
                 const viewport = page.getViewport({ scale: AppState.templateScale });
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
@@ -792,7 +689,6 @@
                 overlay.width = viewport.width;
                 overlay.height = viewport.height;
 
-                // Configure standard Pointer Events to support mouse + iPad Touch harmoniously
                 setupDragSelection(overlay);
                 drawExistingQuestionBoxesOnOverlay();
             } catch (err) {
@@ -814,10 +710,8 @@
             }
         }
 
-        // UNIFIED TOUCH/MOUSE DRAG SELECTION VIA POINTER EVENTS (Solves iPad Dragging Issue)
         function setupDragSelection(overlay) {
             overlay.onpointerdown = (e) => {
-                // Prevent scrolling during drag gesture on touch devices
                 overlay.setPointerCapture(e.pointerId);
                 
                 const rect = overlay.getBoundingClientRect();
@@ -850,7 +744,6 @@
                     const w = Math.abs(AppState.selectionStart.x - AppState.selectionEnd.x);
                     const h = Math.abs(AppState.selectionStart.y - AppState.selectionEnd.y);
 
-                    // Adjust coordinates back to standard reference scale (1.5) for consistency across devices
                     const standardScale = 1.5;
                     const scaleRatio = standardScale / AppState.templateScale;
 
@@ -956,10 +849,10 @@
                     AppState.grades[s.id][qId] = {
                         score: null,
                         stampPos: {
-                            gradeX: AppState.selectionBox.x + AppState.selectionBox.w - 40,
-                            gradeY: AppState.selectionBox.y + 25,
-                            boxX: AppState.selectionBox.x + AppState.selectionBox.w - 55,
-                            boxY: AppState.selectionBox.y + AppState.selectionBox.h - 55
+                            gradeX: AppState.selectionBox.w - 45,
+                            gradeY: 35,
+                            boxX: AppState.selectionBox.w - 55,
+                            boxY: AppState.selectionBox.h - 55
                         }
                     };
                 }
@@ -978,7 +871,6 @@
 
         function removeQuestion(qId) {
             AppState.questions = AppState.questions.filter(q => q.id !== qId);
-            
             AppState.students.forEach(s => {
                 if (AppState.grades[s.id]) {
                     delete AppState.grades[s.id][qId];
@@ -1030,7 +922,7 @@
             });
         }
 
-        // ================= KUSHIZASHI GRADING WORKSPACE CORE =================
+        // ================= KUSHIZASHI GRADING WORKSPACE (Vertical Skewered) =================
         function initGradingWorkspace() {
             if (AppState.students.length === 0) {
                 showToast("警告", "採点対象の学生を読み込んでください。", "error");
@@ -1057,80 +949,23 @@
                 AppState.activeQuestionId = AppState.questions[0].id;
             }
 
+            qSelector.value = AppState.activeQuestionId;
             onGradingQuestionChanged();
+        }
+
+        function adjustGradingScale(factor) {
+            AppState.gradingScale = Math.max(0.4, Math.min(3.0, AppState.gradingScale * factor));
+            document.getElementById('grading-scale-indicator').textContent = `${Math.round(AppState.gradingScale * 100)}%`;
+            renderSkeweredGradingRows();
         }
 
         function onGradingQuestionChanged() {
             AppState.activeQuestionId = document.getElementById('grading-question-selector').value;
-            updateGradingStudentList();
-            renderActiveGradingCanvas();
-            updateWorkspaceProgress();
+            updateSkeweredWorkspaceProgress();
+            renderSkeweredGradingRows();
         }
 
-        function updateGradingStudentList() {
-            const container = document.getElementById('grading-student-list');
-            container.innerHTML = '';
-
-            AppState.students.forEach((student, index) => {
-                const record = AppState.grades[student.id] ? AppState.grades[student.id][AppState.activeQuestionId] : null;
-                const scoreAssigned = record && record.score !== null;
-                const activeHighlight = index === AppState.activeStudentIndex;
-
-                const card = document.createElement('button');
-                card.onclick = () => { selectGradingStudent(index); };
-                
-                let scoreLabel = '<span class="text-xs text-slate-300 font-semibold">未採点</span>';
-                let borderTheme = activeHighlight ? "border-rose-500 bg-rose-50/20 animate-pulse" : "border-slate-100 hover:bg-slate-50";
-
-                if (scoreAssigned) {
-                    const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
-                    if (record.score === q.maxScore) {
-                        scoreLabel = `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-full text-[10px]">○ 満点 (${record.score})</span>`;
-                    } else if (record.score === 0) {
-                        scoreLabel = `<span class="px-2 py-0.5 bg-rose-100 text-rose-800 font-bold rounded-full text-[10px]">✓ 零点 (0)</span>`;
-                    } else {
-                        scoreLabel = `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 font-bold rounded-full text-[10px]">△ 部分 (${record.score})</span>`;
-                    }
-                }
-
-                card.className = `w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between ${borderTheme}`;
-                card.innerHTML = `
-                    <div class="space-y-0.5">
-                        <span class="text-xs font-semibold text-slate-400 block font-mono">No.${index+1}</span>
-                        <span class="text-sm font-bold text-slate-800">${student.name}</span>
-                    </div>
-                    <div>${scoreLabel}</div>
-                `;
-
-                container.appendChild(card);
-            });
-        }
-
-        function selectGradingStudent(index) {
-            AppState.activeStudentIndex = index;
-            updateGradingStudentList();
-            renderActiveGradingCanvas();
-            updateWorkspaceProgress();
-        }
-
-        // NAVIGATION SHORTCUTS
-        function nextStudent() {
-            if (AppState.activeStudentIndex < AppState.students.length - 1) {
-                AppState.activeStudentIndex++;
-                selectGradingStudent(AppState.activeStudentIndex);
-            } else {
-                showToast("お知らせ", "最後の学生です。別の設問に切り替えるか完了出力に進んでください。");
-            }
-        }
-
-        function prevStudent() {
-            if (AppState.activeStudentIndex > 0) {
-                AppState.activeStudentIndex--;
-                selectGradingStudent(AppState.activeStudentIndex);
-            }
-        }
-
-        function updateWorkspaceProgress() {
+        function updateSkeweredWorkspaceProgress() {
             const qId = AppState.activeQuestionId;
             let total = AppState.students.length;
             let gradedCount = 0;
@@ -1146,170 +981,316 @@
             document.getElementById('grading-progress-text').textContent = `${gradedCount}/${total} (${percent}%)`;
         }
 
-        // Grading Viewport Scaling controllers
-        function adjustGradingScale(factor) {
-            AppState.gradingScale = Math.max(0.4, Math.min(4.0, AppState.gradingScale * factor));
-            renderActiveGradingCanvas();
-        }
+        async function renderSkeweredGradingRows() {
+            const container = document.getElementById('skewered-workspace-container');
+            container.innerHTML = `
+                <div class="text-center py-12">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500 mb-3"></div>
+                    <p class="text-xs text-slate-500 font-bold">全員の解答用紙を切り抜き展開中...</p>
+                </div>
+            `;
 
-        async function fitGradingWidth() {
-            const student = AppState.students[AppState.activeStudentIndex];
             const question = AppState.questions.find(q => q.id === AppState.activeQuestionId);
-            if (!student || !question || !student.fileData) return;
-            try {
-                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
-                const pdf = await loadingTask.promise;
-                const page = await pdf.getPage(question.pageIndex + 1);
-                const viewport = page.getViewport({ scale: 1.0 });
-                const parentWidth = document.getElementById('grading-canvas-container').clientWidth - 40;
-                AppState.gradingScale = parentWidth / viewport.width;
-                renderActiveGradingCanvas();
-            } catch (err) {
-                console.error(err);
+            if (!question) return;
+
+            // Generate row containers synchronously
+            let rowsHTML = "";
+            AppState.students.forEach((student, sIdx) => {
+                const sGrade = AppState.grades[student.id]?.[question.id];
+                const scoreValue = (sGrade && sGrade.score !== null) ? sGrade.score : '';
+                
+                rowsHTML += `
+                    <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-stretch relative" id="row-${student.id}">
+                        <!-- Left pane: Student Name & Score Controls -->
+                        <div class="w-full md:w-64 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100 pb-4 md:pb-0 md:pr-4">
+                            <div>
+                                <span class="text-xs font-semibold text-slate-400 font-mono">No.${sIdx + 1}</span>
+                                <h3 class="text-base font-bold text-slate-900 leading-tight mb-2">${student.name}</h3>
+                                
+                                <div class="mt-2 text-xs">
+                                    <span class="text-slate-400 font-medium">満点: ${question.maxScore}点 (P.${question.pageIndex + 1})</span>
+                                </div>
+                            </div>
+
+                            <!-- Buttons grid for quick selection -->
+                            <div class="mt-4 space-y-3">
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-400 block mb-1 uppercase">クイック判定</span>
+                                    <div class="grid grid-cols-3 gap-1">
+                                        <button onclick="applyRowScorePreset('${student.id}', ${question.maxScore})" class="py-1 bg-emerald-50 hover:bg-emerald-600 hover:text-white rounded text-[11px] font-bold text-emerald-700 transition shadow-sm border border-emerald-200">○ 満点</button>
+                                        <button onclick="applyRowScorePreset('${student.id}', ${question.maxScore / 2})" class="py-1 bg-amber-50 hover:bg-amber-600 hover:text-white rounded text-[11px] font-bold text-amber-700 transition shadow-sm border border-amber-200">△ 部分</button>
+                                        <button onclick="applyRowScorePreset('${student.id}', 0)" class="py-1 bg-rose-50 hover:bg-rose-600 hover:text-white rounded text-[11px] font-bold text-rose-700 transition shadow-sm border border-rose-200">✓ 零点</button>
+                                    </div>
+                                </div>
+
+                                <!-- Manual Scorer -->
+                                <div class="flex items-center space-x-2">
+                                    <input type="number" id="input-${student.id}" step="0.5" min="0" max="${question.maxScore}" value="${scoreValue}" 
+                                        oninput="validateRowScoreInput('${student.id}')"
+                                        placeholder="未"
+                                        class="w-20 px-2 py-1.5 border border-slate-200 rounded-lg text-lg font-black text-center text-slate-900 focus:ring-2 focus:ring-rose-500/20">
+                                    <span class="text-xs text-slate-400 font-bold">/ ${question.maxScore}点</span>
+                                    
+                                    <button onclick="saveRowScore('${student.id}')" class="ml-auto px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg shadow-sm transition">
+                                        確定
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right pane: PDF Answer Box Cropping Area -->
+                        <div class="flex-1 flex flex-col justify-center min-h-[140px] relative overflow-hidden bg-slate-50 border border-slate-100 rounded-xl">
+                            <div class="p-1 text-[10px] text-slate-400 font-medium absolute top-1 left-2 select-none z-10 bg-white/80 rounded px-1">
+                                解答欄 (スタンプをドラッグして位置調整可)
+                            </div>
+                            
+                            <!-- Align Canvas in center -->
+                            <div class="flex justify-center items-center py-4 relative overflow-auto custom-scrollbar">
+                                <div class="relative shadow rounded border border-slate-200/80 bg-white" style="user-select:none;">
+                                    <canvas id="canvas-student-${student.id}" class="block"></canvas>
+                                    <!-- Touch Interaction Overlay Layer -->
+                                    <canvas id="overlay-student-${student.id}" class="absolute top-0 left-0 w-full h-full cursor-crosshair touch-none"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = rowsHTML;
+
+            // Asynchronously draw cropped canvas for each row
+            for (let i = 0; i < AppState.students.length; i++) {
+                const student = AppState.students[i];
+                await renderCropAndStamps(student, question);
             }
         }
 
-        async function fitGradingHeight() {
-            const student = AppState.students[AppState.activeStudentIndex];
-            const question = AppState.questions.find(q => q.id === AppState.activeQuestionId);
-            if (!student || !question || !student.fileData) return;
-            try {
-                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
-                const pdf = await loadingTask.promise;
-                const page = await pdf.getPage(question.pageIndex + 1);
-                const viewport = page.getViewport({ scale: 1.0 });
-                const parentHeight = document.getElementById('grading-canvas-container').clientHeight - 40;
-                AppState.gradingScale = parentHeight / viewport.height;
-                renderActiveGradingCanvas();
-            } catch (err) {
-                console.error(err);
-            }
-        }
+        async function renderCropAndStamps(student, question) {
+            const canvas = document.getElementById(`canvas-student-${student.id}`);
+            const overlay = document.getElementById(`overlay-student-${student.id}`);
+            if (!canvas || !overlay) return;
 
-        // CORE CANVAS RENDERING WITH HIGH QUALITY CROPPING
-        async function renderActiveGradingCanvas() {
-            const student = AppState.students[AppState.activeStudentIndex];
-            const question = AppState.questions.find(q => q.id === AppState.activeQuestionId);
-            
-            if (!student || !question || !student.fileData) return;
-
-            document.getElementById('grading-current-student-name').textContent = student.name;
-            document.getElementById('canvas-zoom-status').textContent = `${Math.round(AppState.gradingScale * 100)}% 表示`;
+            const ctx = canvas.getContext('2d');
+            const oCtx = overlay.getContext('2d');
 
             try {
+                // Render original PDF page at standard resolution
                 const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
                 const pdf = await loadingTask.promise;
                 const page = await pdf.getPage(question.pageIndex + 1);
 
-                const canvas = document.getElementById('grading-pdf-canvas');
-                const context = canvas.getContext('2d');
+                // Use reference scale 1.5 for cropping
+                const cropBaseScale = 1.5;
+                const viewport = page.getViewport({ scale: cropBaseScale });
 
-                // Render dynamically using active gradingScale zoom factor
-                const viewport = page.getViewport({ scale: AppState.gradingScale });
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
+                // Draw whole page inside hidden temporary canvas
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = viewport.width;
+                tempCanvas.height = viewport.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
 
-                const renderContext = {
-                    canvasContext: context,
-                    viewport: viewport
-                };
+                // Crop using rect definitions
+                const rect = question.rect;
+                const targetW = rect.w * AppState.gradingScale;
+                const targetH = rect.h * AppState.gradingScale;
 
-                await page.render(renderContext).promise;
+                canvas.width = targetW;
+                canvas.height = targetH;
+                overlay.width = targetW;
+                overlay.height = targetH;
 
-                const overlay = document.getElementById('grading-interactive-overlay');
-                overlay.width = viewport.width;
-                overlay.height = viewport.height;
+                // Draw cropped image inside user's viewports
+                ctx.drawImage(
+                    tempCanvas, 
+                    rect.x, rect.y, rect.w, rect.h, 
+                    0, 0, targetW, targetH
+                );
 
-                focusCanvasViewportOnQuestionRect(question.rect, viewport);
-                buildQuickScorePanel(question);
-
+                // Initialize grades coordinates if empty
                 if (!AppState.grades[student.id]) AppState.grades[student.id] = {};
                 if (!AppState.grades[student.id][question.id]) {
                     AppState.grades[student.id][question.id] = {
                         score: null,
                         stampPos: {
-                            gradeX: question.rect.x + question.rect.w - 40,
-                            gradeY: question.rect.y + 25,
-                            boxX: question.rect.x + question.rect.w - 55,
-                            boxY: question.rect.y + question.rect.h - 55
+                            gradeX: rect.w - 45,
+                            gradeY: 35,
+                            boxX: rect.w - 55,
+                            boxY: rect.h - 55
                         }
                     };
                 }
 
-                const currentGrade = AppState.grades[student.id][question.id];
-                if (currentGrade && currentGrade.score !== null) {
-                    document.getElementById('manual-score-input').value = currentGrade.score;
-                } else {
-                    document.getElementById('manual-score-input').value = '';
-                }
+                drawSingleRowStamps(student.id, question);
+                setupRowTouchDragging(student.id, question);
 
-                drawGradingStampsOnOverlay();
-                setupInteractiveOverlayDragging();
             } catch (err) {
-                console.error("Grading canvas render failed:", err);
+                console.error(`Crop failed for ${student.name}`, err);
+                ctx.fillStyle = '#fee2e2';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '12px sans-serif';
+                ctx.fillStyle = '#b91c1c';
+                ctx.fillText("読込失敗", 10, 30);
             }
         }
 
-        function focusCanvasViewportOnQuestionRect(qRect, viewport) {
-            const container = document.getElementById('grading-canvas-container');
-            const standardScale = 1.5;
-            const scaleRatio = AppState.gradingScale / standardScale;
-            
-            const targetX = qRect.x * scaleRatio;
-            const targetY = qRect.y * scaleRatio;
+        function drawSingleRowStamps(studentId, question) {
+            const overlay = document.getElementById(`overlay-student-${studentId}`);
+            if (!overlay) return;
 
-            const padding = 60;
-            const wrapper = document.getElementById('grading-canvas-wrapper');
-            wrapper.style.width = `${viewport.width}px`;
-            wrapper.style.height = `${viewport.height}px`;
+            const ctx = overlay.getContext('2d');
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
 
-            // Center the cropped question within container, keeping scrolling fully accessible
-            container.scrollLeft = targetX - padding;
-            container.scrollTop = targetY - padding;
-        }
+            const record = AppState.grades[studentId]?.[question.id];
+            if (!record || record.score === null) return;
 
-        function buildQuickScorePanel(question) {
-            const container = document.getElementById('quick-score-buttons');
-            container.innerHTML = '';
+            const score = record.score;
+            const ratio = AppState.gradingScale;
 
-            const max = question.maxScore;
-            const options = [];
+            let markX = record.stampPos.gradeX * ratio;
+            let markY = record.stampPos.gradeY * ratio;
+            let boxX = record.stampPos.boxX * ratio;
+            let boxY = record.stampPos.boxY * ratio;
 
-            if (max === 1) {
-                options.push({ label: '正解 (1)', val: 1 });
-                options.push({ label: '不正解 (0)', val: 0 });
+            // DRAW RED PEN STAMPS
+            ctx.strokeStyle = '#e11d48'; // Vivid Red
+            ctx.lineWidth = 3.5 * Math.sqrt(ratio);
+            ctx.shadowBlur = 3;
+            ctx.shadowColor = 'rgba(225, 29, 72, 0.2)';
+
+            // 1. Correctness Mark
+            if (score === question.maxScore) {
+                // Correct: Double Circle (○)
+                ctx.beginPath();
+                ctx.arc(markX, markY, 20 * ratio, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(markX, markY, 12 * ratio, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (score === 0) {
+                // Incorrect: Sharp Checkmark (✓)
+                ctx.beginPath();
+                const sz = 14 * ratio;
+                ctx.moveTo(markX - sz, markY - (sz / 3));
+                ctx.lineTo(markX - (sz / 4), markY + (sz * 0.8));
+                ctx.lineTo(markX + sz, markY - sz);
+                ctx.stroke();
             } else {
-                options.push({ label: '満点 (○)', val: max });
-                if (max % 2 === 0) {
-                    options.push({ label: '半分 (△)', val: max / 2 });
-                } else {
-                    options.push({ label: '部分点 (△)', val: Math.floor(max / 2) });
-                }
-                options.push({ label: '零点 (✓)', val: 0 });
+                // Partial Score: Triangle with inner Score
+                ctx.beginPath();
+                const rad = 22 * ratio;
+                ctx.moveTo(markX, markY - rad);
+                ctx.lineTo(markX - rad, markY + (rad * 0.8));
+                ctx.lineTo(markX + rad, markY + (rad * 0.8));
+                ctx.closePath();
+                ctx.stroke();
+
+                // Put score inside triangle
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#e11d48';
+                ctx.font = `bold ${Math.round(13 * ratio)}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(score, markX, markY + (4 * ratio));
             }
 
-            options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.onclick = () => { applyScorePreset(opt.val); };
-                btn.className = "py-2 bg-slate-100 hover:bg-rose-500 hover:text-white transition-all text-xs font-bold rounded-lg text-slate-700 border border-slate-200 hover:border-rose-600 shadow-sm";
-                btn.textContent = opt.label;
-                container.appendChild(btn);
-            });
-
-            document.getElementById('manual-score-max').textContent = `${max} 点`;
+            // 2. Score Box Stamp
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#e11d48';
+            ctx.lineWidth = 3 * Math.sqrt(ratio);
+            
+            const boxW = 44 * ratio;
+            const boxH = 40 * ratio;
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
+            
+            ctx.fillStyle = '#e11d48';
+            ctx.font = `bold ${Math.round(18 * ratio)}px monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(score, boxX + (boxW/2), boxY + (boxH/2));
         }
 
-        function applyScorePreset(scoreValue) {
-            document.getElementById('manual-score-input').value = scoreValue;
-            validateManualScoreInput();
-            commitGrading();
+        function setupRowTouchDragging(studentId, question) {
+            const overlay = document.getElementById(`overlay-student-${studentId}`);
+            if (!overlay) return;
+
+            overlay.onpointerdown = (e) => {
+                const rect = overlay.getBoundingClientRect();
+                const mouseX = (e.clientX - rect.left) * (overlay.width / rect.width);
+                const mouseY = (e.clientY - rect.top) * (overlay.height / rect.height);
+
+                const record = AppState.grades[studentId]?.[question.id];
+                if (!record || record.score === null) return;
+
+                const ratio = AppState.gradingScale;
+                const markX = record.stampPos.gradeX * ratio;
+                const markY = record.stampPos.gradeY * ratio;
+                const distGrade = Math.hypot(mouseX - markX, mouseY - markY);
+
+                const boxW = 44 * ratio;
+                const boxH = 40 * ratio;
+                const boxCenterX = (record.stampPos.boxX + 22) * ratio;
+                const boxCenterY = (record.stampPos.boxY + 20) * ratio;
+                const distBox = Math.hypot(mouseX - boxCenterX, mouseY - boxCenterY);
+
+                const grabRange = 30 * ratio;
+
+                if (distGrade < grabRange) {
+                    overlay.setPointerCapture(e.pointerId);
+                    AppState.draggingStampStudentId = studentId;
+                    AppState.draggingStampType = 'grade';
+                    AppState.draggingStampOffset = { x: mouseX - markX, y: mouseY - markY };
+                } else if (distBox < grabRange) {
+                    overlay.setPointerCapture(e.pointerId);
+                    AppState.draggingStampStudentId = studentId;
+                    AppState.draggingStampType = 'scorebox';
+                    AppState.draggingStampOffset = { x: mouseX - boxCenterX, y: mouseY - boxCenterY };
+                }
+            };
+
+            overlay.onpointermove = (e) => {
+                if (AppState.draggingStampStudentId !== studentId) return;
+                
+                const rect = overlay.getBoundingClientRect();
+                const mouseX = (e.clientX - rect.left) * (overlay.width / rect.width);
+                const mouseY = (e.clientY - rect.top) * (overlay.height / rect.height);
+
+                const record = AppState.grades[studentId]?.[question.id];
+                if (!record) return;
+
+                const ratio = AppState.gradingScale;
+
+                if (AppState.draggingStampType === 'grade') {
+                    record.stampPos.gradeX = (mouseX - AppState.draggingStampOffset.x) / ratio;
+                    record.stampPos.gradeY = (mouseY - AppState.draggingStampOffset.y) / ratio;
+                } else if (AppState.draggingStampType === 'scorebox') {
+                    record.stampPos.boxX = ((mouseX - AppState.draggingStampOffset.x) / ratio) - 22;
+                    record.stampPos.boxY = ((mouseY - AppState.draggingStampOffset.y) / ratio) - 20;
+                }
+
+                drawSingleRowStamps(studentId, question);
+            };
+
+            overlay.onpointerup = (e) => {
+                if (AppState.draggingStampStudentId !== studentId) return;
+                AppState.draggingStampStudentId = null;
+                AppState.draggingStampType = null;
+                overlay.releasePointerCapture(e.pointerId);
+            };
         }
 
-        function validateManualScoreInput() {
-            const input = document.getElementById('manual-score-input');
+        // ACTION DECK LOGIC FOR VERTICAL ROWS
+        function applyRowScorePreset(studentId, scoreVal) {
+            document.getElementById(`input-${studentId}`).value = scoreVal;
+            validateRowScoreInput(studentId);
+            saveRowScore(studentId);
+        }
+
+        function validateRowScoreInput(studentId) {
+            const input = document.getElementById(`input-${studentId}`);
             const score = parseFloat(input.value);
             const question = AppState.questions.find(q => q.id === AppState.activeQuestionId);
-            
             if (!question) return;
 
             if (score > question.maxScore) {
@@ -1317,256 +1298,50 @@
             } else if (score < 0 || isNaN(score)) {
                 input.value = 0;
             }
-
-            drawGradingStampsOnOverlay();
         }
 
-        function drawGradingStampsOnOverlay() {
-            const overlay = document.getElementById('grading-interactive-overlay');
-            const ctx = overlay.getContext('2d');
-            ctx.clearRect(0, 0, overlay.width, overlay.height);
+        function saveRowScore(studentId) {
+            const input = document.getElementById(`input-${studentId}`);
+            const scoreStr = input.value;
+            const question = AppState.questions.find(q => q.id === AppState.activeQuestionId);
+            if (!question) return;
 
-            const student = AppState.students[AppState.activeStudentIndex];
-            const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
-            if (!student || !q) return;
-
-            const scoreStr = document.getElementById('manual-score-input').value;
             if (scoreStr === '') {
-                document.getElementById('stamp-indicator-icon').textContent = '未決定';
-                document.getElementById('stamp-indicator-box').textContent = '未決定';
+                showToast("注意", "点数が未入力です。");
                 return;
             }
 
             const score = parseFloat(scoreStr);
-            const record = AppState.grades[student.id][q.id];
-            if (!record) return;
-
-            const standardScale = 1.5;
-            const ratio = AppState.gradingScale / standardScale; 
-            
-            let markX = record.stampPos.gradeX * ratio;
-            let markY = record.stampPos.gradeY * ratio;
-            let boxX = record.stampPos.boxX * ratio;
-            let boxY = record.stampPos.boxY * ratio;
-
-            ctx.strokeStyle = '#e11d48'; 
-            ctx.lineWidth = 4 * Math.sqrt(ratio); // Keep aesthetic scaling crisp
-            ctx.shadowBlur = 4;
-            ctx.shadowColor = 'rgba(225, 29, 72, 0.2)';
-
-            const stampRadius = 26 * ratio;
-            const markSize = 16 * ratio;
-
-            // Draw vector annotations based on score thresholds
-            if (score === q.maxScore) {
-                ctx.beginPath();
-                ctx.arc(markX, markY, stampRadius, 0, Math.PI * 2);
-                ctx.stroke();
-                document.getElementById('stamp-indicator-icon').textContent = '○ (満点)';
-            } else if (score === 0) {
-                ctx.beginPath();
-                ctx.moveTo(markX - markSize, markY - (markSize/3));
-                ctx.lineTo(markX - (markSize/4), markY + (markSize * 0.75));
-                ctx.lineTo(markX + markSize, markY - markSize);
-                ctx.stroke();
-                document.getElementById('stamp-indicator-icon').textContent = '✓ (零点)';
-            } else {
-                ctx.beginPath();
-                ctx.moveTo(markX, markY - stampRadius);
-                ctx.lineTo(markX - stampRadius, markY + (stampRadius * 0.75));
-                ctx.lineTo(markX + stampRadius, markY + (stampRadius * 0.75));
-                ctx.closePath();
-                ctx.stroke();
-
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = '#e11d48';
-                ctx.font = `bold ${Math.round(16 * ratio)}px sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(`+${score}`, markX, markY + (4 * ratio));
-                
-                document.getElementById('stamp-indicator-icon').textContent = `△ (部分点: +${score})`;
-            }
-
-            // Draw vector box score stamp
-            ctx.shadowBlur = 0;
-            ctx.strokeStyle = '#e11d48';
-            ctx.lineWidth = 3 * Math.sqrt(ratio);
-            
-            const boxW = 46 * ratio;
-            const boxH = 42 * ratio;
-            ctx.strokeRect(boxX, boxY, boxW, boxH);
-            
-            ctx.fillStyle = '#e11d48';
-            ctx.font = `bold ${Math.round(20 * ratio)}px monospace`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(score, boxX + (boxW/2), boxY + (boxH/2));
-
-            document.getElementById('stamp-indicator-box').textContent = `四角得点 [${score}]`;
-        }
-
-        // SOLID TOUCH STAMP DRAGGING ENGINE FOR IPAD & TOUGH TOUCHPAD DEVICES
-        function setupInteractiveOverlayDragging() {
-            const overlay = document.getElementById('grading-interactive-overlay');
-            const standardScale = 1.5;
-
-            overlay.onpointerdown = (e) => {
-                const rect = overlay.getBoundingClientRect();
-                const mouseX = (e.clientX - rect.left) * (overlay.width / rect.width);
-                const mouseY = (e.clientY - rect.top) * (overlay.height / rect.height);
-
-                const student = AppState.students[AppState.activeStudentIndex];
-                const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
-                if (!student || !q) return;
-
-                const record = AppState.grades[student.id][q.id];
-                if (!record) return;
-
-                const ratio = AppState.gradingScale / standardScale;
-
-                const markX = record.stampPos.gradeX * ratio;
-                const markY = record.stampPos.gradeY * ratio;
-                const distGrade = Math.hypot(mouseX - markX, mouseY - markY);
-
-                const boxW = 46 * ratio;
-                const boxH = 42 * ratio;
-                const boxX = (record.stampPos.boxX + 23) * ratio;
-                const boxY = (record.stampPos.boxY + 21) * ratio;
-                const distBox = Math.hypot(mouseX - boxX, mouseY - boxY);
-
-                const grabRange = 36 * ratio; // Generous grab range for touch accuracy
-
-                if (distGrade < grabRange) {
-                    overlay.setPointerCapture(e.pointerId);
-                    AppState.activeStampDragging = true;
-                    AppState.activeStampType = 'grade';
-                    AppState.stampOffset = { x: mouseX - markX, y: mouseY - markY };
-                } else if (distBox < grabRange) {
-                    overlay.setPointerCapture(e.pointerId);
-                    AppState.activeStampDragging = true;
-                    AppState.activeStampType = 'scorebox';
-                    AppState.stampOffset = { x: mouseX - boxX, y: mouseY - boxY };
-                }
-            };
-
-            overlay.onpointermove = (e) => {
-                if (!AppState.activeStampDragging) return;
-                const rect = overlay.getBoundingClientRect();
-                const mouseX = (e.clientX - rect.left) * (overlay.width / rect.width);
-                const mouseY = (e.clientY - rect.top) * (overlay.height / rect.height);
-
-                const student = AppState.students[AppState.activeStudentIndex];
-                const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
-                const record = AppState.grades[student.id][q.id];
-                if (!record) return;
-
-                const ratio = AppState.gradingScale / standardScale;
-
-                if (AppState.activeStampType === 'grade') {
-                    record.stampPos.gradeX = (mouseX - AppState.stampOffset.x) / ratio;
-                    record.stampPos.gradeY = (mouseY - AppState.stampOffset.y) / ratio;
-                } else if (AppState.activeStampType === 'scorebox') {
-                    record.stampPos.boxX = ((mouseX - AppState.stampOffset.x) / ratio) - 23;
-                    record.stampPos.boxY = ((mouseY - AppState.stampOffset.y) / ratio) - 21;
-                }
-
-                drawGradingStampsOnOverlay();
-            };
-
-            overlay.onpointerup = (e) => {
-                if (!AppState.activeStampDragging) return;
-                AppState.activeStampDragging = false;
-                AppState.activeStampType = null;
-                overlay.releasePointerCapture(e.pointerId);
-            };
-        }
-
-        function resetStampPositions(mode) {
-            const student = AppState.students[AppState.activeStudentIndex];
-            const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
-            if (!student || !q) return;
-
-            const record = AppState.grades[student.id][q.id];
-            if (!record) return;
-
-            if (mode === 'top-right') {
-                record.stampPos = {
-                    gradeX: q.rect.x + q.rect.w - 40,
-                    gradeY: q.rect.y + 35,
-                    boxX: q.rect.x + q.rect.w - 55,
-                    boxY: q.rect.y + q.rect.h - 55
-                };
-            } else if (mode === 'center') {
-                record.stampPos = {
-                    gradeX: q.rect.x + (q.rect.w / 2),
-                    gradeY: q.rect.y + (q.rect.h / 2),
-                    boxX: q.rect.x + (q.rect.w / 2) - 23,
-                    boxY: q.rect.y + (q.rect.h / 2) + 15
-                };
-            }
-
-            drawGradingStampsOnOverlay();
-            showToast("配置リセット", "スタンプを初期指定位置に配置しました。");
-        }
-
-        // GRADE COMMIT LOGIC
-        function commitGrading() {
-            const student = AppState.students[AppState.activeStudentIndex];
-            const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
-            if (!student || !q) return;
-
-            const scoreStr = document.getElementById('manual-score-input').value;
-            if (scoreStr === '') {
-                showToast("注意", "点数が空欄です。点数を入力するかクイック配点をクリックしてください。", "error");
-                return;
-            }
-
-            const score = parseFloat(scoreStr);
-            if (!AppState.grades[student.id]) AppState.grades[student.id] = {};
-            if (!AppState.grades[student.id][q.id]) {
-                AppState.grades[student.id][q.id] = {
+            if (!AppState.grades[studentId]) AppState.grades[studentId] = {};
+            if (!AppState.grades[studentId][question.id]) {
+                AppState.grades[studentId][question.id] = {
                     score: score,
                     stampPos: {
-                        gradeX: q.rect.x + q.rect.w - 40,
-                        gradeY: q.rect.y + 25,
-                        boxX: q.rect.x + q.rect.w - 55,
-                        boxY: q.rect.y + q.rect.h - 55
+                        gradeX: question.rect.w - 45,
+                        gradeY: 35,
+                        boxX: question.rect.w - 55,
+                        boxY: question.rect.h - 55
                     }
                 };
             } else {
-                AppState.grades[student.id][q.id].score = score;
+                AppState.grades[studentId][question.id].score = score;
             }
 
-            showToast("保存完了", `${student.name}さんの「${q.name}」得点: ${score}点 を保存しました。`);
-
-            updateGradingStudentList();
-            updateWorkspaceProgress();
-
+            drawSingleRowStamps(studentId, question);
+            updateSkeweredWorkspaceProgress();
+            
+            // Visual highlight flash
+            const rowEl = document.getElementById(`row-${studentId}`);
+            rowEl.classList.add('bg-rose-50/50', 'border-rose-300');
             setTimeout(() => {
-                nextStudent();
-            }, 300);
+                rowEl.classList.remove('bg-rose-50/50', 'border-rose-300');
+            }, 500);
         }
-
-        // Keyboard Shortcut listeners
-        window.addEventListener('keydown', (e) => {
-            if (AppState.activeTab !== 'grading') return;
-            if (document.activeElement.tagName === 'INPUT' && document.activeElement.id !== 'manual-score-input') return;
-
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                commitGrading();
-            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                nextStudent();
-            } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                prevStudent();
-            }
-        });
 
         // ================= SCREEN 4: EXPORTS AND ANALYTICS CONTROLLERS =================
         function initExportsDashboard() {
             if (AppState.students.length === 0 || AppState.questions.length === 0) {
-                showToast("警告", "採点が十分に進んでいません。学生と設問を設定してください。");
+                showToast("警告", "採点が十分に設定されていません。学生と設問を設定してください。");
                 switchTab('students');
                 return;
             }
@@ -1586,7 +1361,7 @@
                 let fullyGraded = true;
 
                 AppState.questions.forEach(q => {
-                    const rec = AppState.grades[s.id] ? AppState.grades[s.id][q.id] : null;
+                    const rec = AppState.grades[s.id]?.[q.id];
                     if (rec && rec.score !== null) {
                         grandGradedCells++;
                         studentTotalScore += rec.score;
@@ -1652,19 +1427,19 @@
                 let grandScoreSum = 0;
 
                 AppState.questions.forEach(q => {
-                    const grade = AppState.grades[student.id] ? AppState.grades[student.id][q.id] : null;
+                    const grade = AppState.grades[student.id]?.[q.id];
                     if (grade && grade.score !== null) {
                         grandScoreSum += grade.score;
                         rowHTML += `<td class="py-3 px-3 text-center border-l border-slate-100 font-mono font-bold">${grade.score}</td>`;
                     } else {
-                        rowHTML += `<td class="py-3 px-3 text-center border-l border-slate-100 text-slate-300 italic font-normal">未採点</td>`;
+                        rowHTML += `<td class="py-3 px-3 text-center border-l border-slate-100 text-slate-300 italic font-normal">未</td>`;
                     }
                 });
 
                 parentGroups.forEach(grpName => {
                     let groupSum = 0;
                     AppState.questions.filter(q => q.parentGroup === grpName).forEach(q => {
-                        const grade = AppState.grades[student.id] ? AppState.grades[student.id][q.id] : null;
+                        const grade = AppState.grades[student.id]?.[q.id];
                         if (grade && grade.score !== null) {
                             groupSum += grade.score;
                         }
@@ -1703,7 +1478,7 @@
                 let total = 0;
 
                 AppState.questions.forEach(q => {
-                    const rec = AppState.grades[student.id] ? AppState.grades[student.id][q.id] : null;
+                    const rec = AppState.grades[student.id]?.[q.id];
                     const val = (rec && rec.score !== null) ? rec.score : "";
                     row.push(val);
                     if (rec && rec.score !== null) total += rec.score;
@@ -1712,7 +1487,7 @@
                 parentGroups.forEach(gName => {
                     let gSum = 0;
                     AppState.questions.filter(q => q.parentGroup === gName).forEach(q => {
-                        const rec = AppState.grades[student.id] ? AppState.grades[student.id][q.id] : null;
+                        const rec = AppState.grades[student.id]?.[q.id];
                         if (rec && rec.score !== null) gSum += rec.score;
                     });
                     row.push(gSum);
@@ -1736,7 +1511,7 @@
         // JSON PERSISTENCE CONTROL ENGINE
         function saveSession() {
             const sessionData = {
-                version: "1.0",
+                version: "2.0",
                 questions: AppState.questions,
                 grades: AppState.grades,
                 studentsMetadata: AppState.students.map(s => ({ id: s.id, name: s.name, fileName: s.fileName }))
@@ -1800,19 +1575,18 @@
                 return;
             }
 
-            showToast("PDFアノテーション中...", "各答案用紙上に赤い正誤スタンプと得点欄を配置して、高品質な採点後PDFを作成しています。しばらくお待ちください。");
+            showToast("PDFアノテーション中...", "各答案用紙上に赤い二重丸・三角・得点欄スタンプを合成して書き出しています。しばらくお待ちください。");
 
             for (let i = 0; i < AppState.students.length; i++) {
                 const s = AppState.students[i];
                 
                 try {
-                    // Safe cloning to prevent worker detachment crashes
                     const pdfDoc = await PDFLib.PDFDocument.load(new Uint8Array(s.fileData.slice(0)));
                     const helveticaFont = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
                     const pages = pdfDoc.getPages();
 
                     AppState.questions.forEach(q => {
-                        const rec = AppState.grades[s.id] ? AppState.grades[s.id][q.id] : null;
+                        const rec = AppState.grades[s.id]?.[q.id];
                         if (!rec || rec.score === null) return; 
 
                         const page = pages[q.pageIndex];
@@ -1820,81 +1594,93 @@
 
                         const { width, height } = page.getSize();
                         
-                        // Reference scale calculations (calculated relative to standard template scale)
-                        const canvasW = document.getElementById('pdf-template-canvas').width || 800;
-                        const canvasH = document.getElementById('pdf-template-canvas').height || 1000;
+                        // Crop box baseline coordinate logic
+                        // (We used standard 1.5 scale in workspace setup)
+                        const standardScale = 1.5;
 
-                        const ratioX = width / canvasW;
-                        const ratioY = height / canvasH;
+                        const canvasW = width; 
+                        const canvasH = height;
 
-                        const markCanvasX = rec.stampPos.gradeX;
-                        const markCanvasY = rec.stampPos.gradeY;
+                        const markCanvasX = q.rect.x + rec.stampPos.gradeX;
+                        const markCanvasY = q.rect.y + rec.stampPos.gradeY;
                         
-                        const markPdfX = markCanvasX * ratioX;
-                        const markPdfY = (canvasH - markCanvasY) * ratioY;
+                        const markPdfX = markCanvasX * (width / (standardScale * (width / standardScale)));
+                        const markPdfY = height - (markCanvasY * (height / (standardScale * (height / standardScale))));
 
-                        const redColor = PDFLib.rgb(0.88, 0.11, 0.27);
+                        const redColor = PDFLib.rgb(0.88, 0.11, 0.27); // Vivid grading red
 
-                        // Draw vector circles, checkmarks and triangles directly on PDF layers
+                        // 1. Draw Correctness Stamps
                         if (rec.score === q.maxScore) {
+                            // Double Circle (○)
                             page.drawCircle({
                                 x: markPdfX,
                                 y: markPdfY,
-                                radius: 24,
+                                radius: 20,
+                                borderColor: redColor,
+                                borderWidth: 3.5
+                            });
+                            page.drawCircle({
+                                x: markPdfX,
+                                y: markPdfY,
+                                radius: 12,
                                 borderColor: redColor,
                                 borderWidth: 3.5
                             });
                         } else if (rec.score === 0) {
+                            // Checkmark (✓)
+                            const sz = 14;
                             page.drawLine({
-                                start: { x: markPdfX - 14, y: markPdfY + 4 },
-                                end: { x: markPdfX - 3, y: markPdfY - 12 },
+                                start: { x: markPdfX - sz, y: markPdfY + (sz / 3) },
+                                end: { x: markPdfX - (sz / 4), y: markPdfY - (sz * 0.8) },
                                 thickness: 3.5,
                                 color: redColor
                             });
                             page.drawLine({
-                                start: { x: markPdfX - 3, y: markPdfY - 12 },
-                                end: { x: markPdfX + 16, y: markPdfY + 14 },
+                                start: { x: markPdfX - (sz / 4), y: markPdfY - (sz * 0.8) },
+                                end: { x: markPdfX + sz, y: markPdfY + sz },
                                 thickness: 3.5,
                                 color: redColor
                             });
                         } else {
+                            // Triangle with inner Score
+                            const rad = 22;
                             page.drawLine({
-                                start: { x: markPdfX, y: markPdfY + 22 },
-                                end: { x: markPdfX - 22, y: markPdfY - 16 },
+                                start: { x: markPdfX, y: markPdfY + rad },
+                                end: { x: markPdfX - rad, y: markPdfY - (rad * 0.8) },
                                 thickness: 3.5,
                                 color: redColor
                             });
                             page.drawLine({
-                                start: { x: markPdfX - 22, y: markPdfY - 16 },
-                                end: { x: markPdfX + 22, y: markPdfY - 16 },
+                                start: { x: markPdfX - rad, y: markPdfY - (rad * 0.8) },
+                                end: { x: markPdfX + rad, y: markPdfY - (rad * 0.8) },
                                 thickness: 3.5,
                                 color: redColor
                             });
                             page.drawLine({
-                                start: { x: markPdfX + 22, y: markPdfY - 16 },
-                                end: { x: markPdfX, y: markPdfY + 22 },
+                                start: { x: markPdfX + rad, y: markPdfY - (rad * 0.8) },
+                                end: { x: markPdfX, y: markPdfY + rad },
                                 thickness: 3.5,
                                 color: redColor
                             });
 
-                            page.drawText(`+${rec.score}`, {
-                                x: markPdfX - 11,
-                                y: markPdfY - 7,
-                                size: 14,
+                            page.drawText(`${rec.score}`, {
+                                x: markPdfX - 5,
+                                y: markPdfY - 5,
+                                size: 12,
                                 font: helveticaFont,
                                 color: redColor
                             });
                         }
 
-                        // Draw custom vector box score stamp
-                        const boxCanvasX = rec.stampPos.boxX;
-                        const boxCanvasY = rec.stampPos.boxY;
+                        // 2. Draw Score Box Stamp
+                        const boxCanvasX = q.rect.x + rec.stampPos.boxX;
+                        const boxCanvasY = q.rect.y + rec.stampPos.boxY;
 
-                        const boxPdfX = boxCanvasX * ratioX;
-                        const boxPdfY = (canvasH - boxCanvasY) * ratioY;
+                        const boxPdfX = boxCanvasX;
+                        const boxPdfY = height - boxCanvasY;
 
-                        const boxW = 46 * ratioX;
-                        const boxH = 42 * ratioY;
+                        const boxW = 44;
+                        const boxH = 40;
 
                         page.drawRectangle({
                             x: boxPdfX,
@@ -1937,7 +1723,6 @@
         function downloadPerformanceReport() {
             if (AppState.students.length === 0) return;
 
-            // Escaping nested script tags carefully to avoid SyntaxErrors
             let reportHTML = `<!DOCTYPE html>
             <html lang="ja">
             <head>
@@ -1956,15 +1741,15 @@
                 let rowsHTML = "";
 
                 AppState.questions.forEach(q => {
-                    const grade = AppState.grades[student.id] ? AppState.grades[student.id][q.id] : null;
+                    const grade = AppState.grades[student.id]?.[q.id];
                     const val = (grade && grade.score !== null) ? grade.score : 0;
                     sumScore += val;
                     maxPossible += q.maxScore;
 
                     rowsHTML += `
                         <tr class="border-b border-slate-100">
-                            <td class="py-2 font-bold text-slate-700">${q.parentGroup ? q.parentGroup + ' ' : ''}${q.name}</td>
-                            <td class="py-2 font-mono text-center font-bold text-slate-900">${val} / ${q.maxScore}</td>
+                            <td class="py-2 font-bold text-slate-700">\${q.parentGroup ? q.parentGroup + ' ' : ''}\${q.name}</td>
+                            <td class="py-2 font-mono text-center font-bold text-slate-900">\${val} / \dots \${q.maxScore}</td>
                             <td class="py-2 text-right">
                                 \${val === q.maxScore ? '<span class="text-emerald-600 font-bold">○ 満点</span>' : val === 0 ? '<span class="text-rose-500">✓ 零点</span>' : '<span class="text-amber-500">△ 部分</span>'}
                             </td>
