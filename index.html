@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>串刺し採点システム - Kushizashi Grade Pro</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,31 +15,39 @@
     <style>
         body {
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            touch-action: manipulation;
+        }
+        .custom-scrollbar {
+            -webkit-overflow-scrolling: touch; /* smooth momentum scrolling on iOS */
         }
         .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #f1f5f9;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #cbd5e1;
-            border-radius: 3px;
+            border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-        /* Custom highlight for area selection */
+        /* Selection and overlay styles */
         .selection-box {
             border: 2px dashed #ef4444;
             background-color: rgba(239, 68, 68, 0.15);
             position: absolute;
             pointer-events: none;
         }
+        /* Touch prevent default override for active drawing areas */
+        .drawing-active {
+            touch-action: none;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-hidden">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-hidden select-none">
 
     <!-- Top Header -->
     <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10 flex-shrink-0">
@@ -120,7 +128,7 @@
         <main class="flex-1 flex flex-col overflow-hidden bg-slate-50">
 
             <!-- ================= SCREEN 1: STUDENTS UPLOAD ================= -->
-            <section id="screen-students" class="flex-1 p-6 overflow-y-auto space-y-6">
+            <section id="screen-students" class="flex-1 p-6 overflow-y-auto space-y-6 custom-scrollbar">
                 <div class="max-w-4xl mx-auto space-y-6">
                     <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                         <h2 class="text-lg font-bold text-slate-900 mb-2">学生答案PDFの読み込み</h2>
@@ -135,7 +143,7 @@
                                 </div>
                                 <div>
                                     <p class="text-base font-bold text-slate-800">ファイルをドラッグ＆ドロップ</p>
-                                    <p class="text-xs text-slate-400 mt-1">またはコンピュータからファイルを選択 (複数選択可)</p>
+                                    <p class="text-xs text-slate-400 mt-1">またはコンピュータからファイルを選択 (複数選択可、iPadの場合はファイルを選択)</p>
                                 </div>
                             </div>
                         </div>
@@ -171,12 +179,12 @@
             </section>
 
             <!-- ================= SCREEN 2: QUESTION SELECTION ================= -->
-            <section id="screen-questions" class="flex-1 flex overflow-hidden hidden">
+            <section id="screen-questions" class="flex-1 flex flex-col md:flex-row overflow-hidden hidden">
                 <!-- Left Pane: Area & Point Definition -->
-                <div class="w-80 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
+                <div class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
                     <div class="p-4 border-b border-slate-100 bg-slate-50/50">
                         <h3 class="text-sm font-bold text-slate-900">設問の追加・配点</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">右の答案用紙から、ドラッグで設問の解答エリアを設定してください。</p>
+                        <p class="text-xs text-slate-500 mt-0.5">右の答案用紙から、ドラッグで設問の解答エリアを設定してください（iPad/タッチ操作対応）。</p>
                     </div>
 
                     <div class="p-4 border-b border-slate-100 space-y-3">
@@ -211,13 +219,23 @@
 
                 <!-- Right Pane: Interactive PDF Selector -->
                 <div class="flex-1 flex flex-col overflow-hidden bg-slate-100">
-                    <div class="bg-white px-6 py-2 border-b border-slate-200 flex items-center justify-between">
+                    <div class="bg-white px-4 py-2 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
                         <div class="flex items-center space-x-2">
                             <span class="text-xs font-bold text-slate-500">基準となるテンプレート用紙:</span>
                             <select id="template-student-selector" onchange="changeTemplateStudent()" class="px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-rose-500">
                                 <!-- Option list of uploaded students -->
                             </select>
                         </div>
+                        
+                        <!-- Zoom and Scale Controls -->
+                        <div class="flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button onclick="adjustTemplateScale(0.85)" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="縮小">縮小 (-)</button>
+                            <button onclick="fitTemplateWidth()" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="幅に合わせる">幅合わせ</button>
+                            <button onclick="fitTemplateHeight()" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="全体を表示">全体</button>
+                            <button onclick="adjustTemplateScale(1.15)" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="拡大">拡大 (+)</button>
+                            <span id="template-scale-indicator" class="text-[10px] text-slate-500 font-mono font-semibold px-1">100%</span>
+                        </div>
+
                         <div class="flex items-center space-x-2">
                             <button onclick="prevTemplatePage()" class="p-1 bg-slate-50 hover:bg-slate-200 border border-slate-200 rounded text-xs">&larr; 前へ</button>
                             <span id="template-page-indicator" class="text-xs font-semibold text-slate-600">ページ 1 / 1</span>
@@ -225,21 +243,21 @@
                         </div>
                     </div>
 
-                    <!-- PDF Template Crop Viewport -->
-                    <div class="flex-1 overflow-auto p-6 flex justify-center items-start custom-scrollbar relative" id="pdf-template-container-parent">
+                    <!-- PDF Template Crop Viewport with smooth scroll and pointer-actions -->
+                    <div class="flex-1 overflow-auto p-4 flex justify-center items-start custom-scrollbar relative" id="pdf-template-container-parent">
                         <div class="relative shadow-xl rounded-lg bg-white overflow-hidden" id="pdf-template-wrapper" style="user-select: none;">
-                            <canvas id="pdf-template-canvas"></canvas>
-                            <!-- Overlay canvas for selection box -->
-                            <canvas id="pdf-template-overlay" class="absolute top-0 left-0 w-full h-full cursor-crosshair"></canvas>
+                            <canvas id="pdf-template-canvas" class="block"></canvas>
+                            <!-- Overlay canvas for selection box - Pointer events support touch perfectly -->
+                            <canvas id="pdf-template-overlay" class="absolute top-0 left-0 w-full h-full cursor-crosshair touch-none"></canvas>
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- ================= SCREEN 3: KUSHIZASHI GRADING WORKSPACE ================= -->
-            <section id="screen-grading" class="flex-1 flex overflow-hidden hidden">
+            <section id="screen-grading" class="flex-1 flex flex-col md:flex-row overflow-hidden hidden">
                 <!-- Left Grading Sidebar: Questions & Stats -->
-                <div class="w-80 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
+                <div class="w-full md:w-80 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
                     <div class="p-4 border-b border-slate-100 bg-slate-50/50">
                         <span class="text-xs font-bold text-slate-400 block uppercase">現在の採点対象の設問</span>
                         <select id="grading-question-selector" onchange="onGradingQuestionChanged()" class="w-full mt-2 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 font-bold text-slate-800">
@@ -257,7 +275,7 @@
                 <div class="flex-1 flex flex-col overflow-hidden">
                     
                     <!-- Student Navigation Header -->
-                    <div class="bg-white px-6 py-3 border-b border-slate-200 flex items-center justify-between flex-shrink-0 shadow-sm z-10">
+                    <div class="bg-white px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 flex-shrink-0 shadow-sm z-10">
                         <div class="flex items-center space-x-3">
                             <button onclick="prevStudent()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-xs font-bold">
                                 &larr; 前の生徒 (A / ⇧+Tab)
@@ -271,9 +289,17 @@
                             </button>
                         </div>
 
+                        <!-- Scale controls for active workspace -->
+                        <div class="flex items-center space-x-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+                            <button onclick="adjustGradingScale(0.85)" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="縮小">縮小 (-)</button>
+                            <button onclick="fitGradingWidth()" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="幅に合わせる">幅合わせ</button>
+                            <button onclick="fitGradingHeight()" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="全体を表示">全体</button>
+                            <button onclick="adjustGradingScale(1.15)" class="p-1 hover:bg-white rounded text-xs font-semibold text-slate-700" title="拡大">拡大 (+)</button>
+                        </div>
+
                         <div class="flex items-center space-x-3 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-xl">
                             <span class="text-xs text-indigo-500 font-bold">全体進捗:</span>
-                            <div class="w-32 bg-indigo-200 h-2 rounded-full overflow-hidden">
+                            <div class="w-24 bg-indigo-200 h-2 rounded-full overflow-hidden">
                                 <div id="grading-progress-bar" class="bg-indigo-600 h-full w-0 transition-all duration-300"></div>
                             </div>
                             <span id="grading-progress-text" class="text-xs text-indigo-700 font-bold font-mono">0/0 (0%)</span>
@@ -281,30 +307,31 @@
                     </div>
 
                     <!-- Work Panel (Canvas Crop View + Score Inputs) -->
-                    <div class="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-100">
+                    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden bg-slate-100">
                         
                         <!-- Left Panel: Interactive Grader Canvas -->
-                        <div class="flex-1 flex flex-col overflow-hidden">
+                        <div class="flex-1 flex flex-col overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-200">
                             <div class="p-3 bg-slate-800 text-slate-300 text-xs flex justify-between items-center flex-shrink-0">
-                                <span class="font-medium">解答欄アノテーションエディタ（ドラッグして得点枠・丸バツスタンプを直接移動できます）</span>
+                                <span class="font-medium">解答欄アノテーションエディタ（スタンプを1本指タッチ/ドラッグで直感的に移動できます）</span>
                                 <span class="bg-slate-700 px-2 py-0.5 rounded font-mono text-rose-400 font-bold" id="canvas-zoom-status">100% 表示</span>
                             </div>
                             
+                            <!-- PDF viewport that supports multi-directional scrolling and dragging inside -->
                             <div class="flex-1 overflow-auto p-4 flex justify-center items-center custom-scrollbar" id="grading-canvas-container">
                                 <div class="relative shadow-2xl rounded-xl border-4 border-slate-300/40 bg-white overflow-hidden" id="grading-canvas-wrapper" style="user-select: none;">
-                                    <canvas id="grading-pdf-canvas"></canvas>
-                                    <canvas id="grading-interactive-overlay" class="absolute top-0 left-0 w-full h-full cursor-crosshair"></canvas>
+                                    <canvas id="grading-pdf-canvas" class="block"></canvas>
+                                    <canvas id="grading-interactive-overlay" class="absolute top-0 left-0 w-full h-full cursor-crosshair touch-none"></canvas>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Right Panel: Scoring Action Deck -->
-                        <div class="w-full md:w-80 bg-white border-t md:border-t-0 md:border-l border-slate-200 flex flex-col flex-shrink-0">
+                        <div class="w-full lg:w-80 bg-white flex flex-col flex-shrink-0 overflow-y-auto custom-scrollbar">
                             <div class="p-4 border-b border-slate-100 bg-slate-50/50">
                                 <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">採点スタンプ操作</h4>
                             </div>
 
-                            <div class="p-4 flex-1 overflow-y-auto space-y-4 custom-scrollbar">
+                            <div class="p-4 flex-1 space-y-4">
                                 <!-- Score buttons grid -->
                                 <div>
                                     <span class="text-xs font-bold text-slate-400 block mb-2">クイック配点</span>
@@ -336,7 +363,7 @@
                                             <span id="stamp-indicator-box" class="font-bold text-rose-600 font-mono">-</span>
                                         </div>
                                     </div>
-                                    <p class="text-[11px] text-slate-400 leading-relaxed">※点数に応じたスタンプが自動選択されます。PDF出力時にそのまま画像に描画されます。</p>
+                                    <p class="text-[11px] text-slate-400 leading-relaxed">※点数に応じたスタンプが自動描画されます。iPadでもドラッグして各スタンプの位置を自由に変更できます。</p>
                                 </div>
 
                                 <!-- Score Stamp Coordinates & Placement Controls -->
@@ -350,7 +377,7 @@
                             </div>
 
                             <!-- Grade Commit Action -->
-                            <div class="p-4 bg-slate-50 border-t border-slate-100">
+                            <div class="p-4 bg-slate-50 border-t border-slate-100 mt-auto">
                                 <button onclick="commitGrading()" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl shadow-md hover:bg-rose-500 hover:shadow-lg transition-all flex items-center justify-center space-x-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                                     <span>採点を確定して保存</span>
@@ -366,7 +393,7 @@
             </section>
 
             <!-- ================= SCREEN 4: EXPORTS & ANALYTICS ================= -->
-            <section id="screen-exports" class="flex-1 p-6 overflow-y-auto space-y-6 hidden">
+            <section id="screen-exports" class="flex-1 p-6 overflow-y-auto space-y-6 hidden custom-scrollbar">
                 <div class="max-w-6xl mx-auto space-y-6">
                     
                     <!-- Dashboard Statistics cards -->
@@ -478,7 +505,7 @@
         // Set up PDF.js Global Worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // State Manager
+        // State Manager with support for dynamic scaling and touch navigation
         const AppState = {
             students: [],          // Array of Student objects { id, name, fileName, fileData (ArrayBuffer), pageCount }
             questions: [],         // Array of Question objects { id, name, parentGroup, maxScore, rect: { x, y, w, h }, pageIndex }
@@ -489,6 +516,7 @@
             templateStudentId: null,
             templatePageIndex: 0,
             templatePageCount: 1,
+            templateScale: 1.2,    // Responsive base scale for cropping
             
             // Selection States (Screen 2)
             selectionStart: null,
@@ -498,6 +526,7 @@
             // Kushizashi Workspace States (Screen 3)
             activeQuestionId: null,
             activeStudentIndex: 0,
+            gradingScale: 1.5,     // Zoom scale for grading
 
             // Canvas states
             activeStampDragging: false,
@@ -572,6 +601,7 @@
                         const cleanName = file.name.replace(/\.[^/.]+$/, ""); // strip extension
 
                         try {
+                            // Using sliced copy to prevent PDF.js thread detachment
                             const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(fileData.slice(0)) });
                             const pdf = await loadingTask.promise;
                             
@@ -579,7 +609,7 @@
                                 id: studentId,
                                 name: cleanName,
                                 fileName: file.name,
-                                fileData: fileData, // Store raw PDF binary
+                                fileData: fileData, // Store raw PDF binary safely
                                 pageCount: pdf.numPages
                             });
 
@@ -692,12 +722,51 @@
             renderTemplatePDF();
         }
 
+        // PDF Scale Control Engines
+        function adjustTemplateScale(factor) {
+            AppState.templateScale = Math.max(0.4, Math.min(4.0, AppState.templateScale * factor));
+            renderTemplatePDF();
+        }
+
+        async function fitTemplateWidth() {
+            const student = AppState.students.find(s => s.id === AppState.templateStudentId);
+            if (!student || !student.fileData) return;
+            try {
+                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(AppState.templatePageIndex + 1);
+                const viewport = page.getViewport({ scale: 1.0 });
+                const parentWidth = document.getElementById('pdf-template-container-parent').clientWidth - 40;
+                AppState.templateScale = parentWidth / viewport.width;
+                renderTemplatePDF();
+            } catch (err) {
+                console.error("Fit width failed", err);
+            }
+        }
+
+        async function fitTemplateHeight() {
+            const student = AppState.students.find(s => s.id === AppState.templateStudentId);
+            if (!student || !student.fileData) return;
+            try {
+                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(AppState.templatePageIndex + 1);
+                const viewport = page.getViewport({ scale: 1.0 });
+                const parentHeight = document.getElementById('pdf-template-container-parent').clientHeight - 40;
+                AppState.templateScale = parentHeight / viewport.height;
+                renderTemplatePDF();
+            } catch (err) {
+                console.error("Fit height failed", err);
+            }
+        }
+
         async function renderTemplatePDF() {
             const student = AppState.students.find(s => s.id === AppState.templateStudentId);
             if (!student || !student.fileData) return;
 
             AppState.templatePageCount = student.pageCount || 1;
             document.getElementById('template-page-indicator').textContent = `ページ ${AppState.templatePageIndex + 1} / ${student.pageCount}`;
+            document.getElementById('template-scale-indicator').textContent = `${Math.round(AppState.templateScale * 100)}%`;
 
             try {
                 const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
@@ -707,7 +776,8 @@
                 const canvas = document.getElementById('pdf-template-canvas');
                 const context = canvas.getContext('2d');
 
-                const viewport = page.getViewport({ scale: 1.5 });
+                // Responsive dynamic scaling
+                const viewport = page.getViewport({ scale: AppState.templateScale });
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
 
@@ -722,6 +792,7 @@
                 overlay.width = viewport.width;
                 overlay.height = viewport.height;
 
+                // Configure standard Pointer Events to support mouse + iPad Touch harmoniously
                 setupDragSelection(overlay);
                 drawExistingQuestionBoxesOnOverlay();
             } catch (err) {
@@ -743,9 +814,12 @@
             }
         }
 
-        // INTERACTIVE DRAW BOX SELECTION IN CANVAS
+        // UNIFIED TOUCH/MOUSE DRAG SELECTION VIA POINTER EVENTS (Solves iPad Dragging Issue)
         function setupDragSelection(overlay) {
-            overlay.onmousedown = (e) => {
+            overlay.onpointerdown = (e) => {
+                // Prevent scrolling during drag gesture on touch devices
+                overlay.setPointerCapture(e.pointerId);
+                
                 const rect = overlay.getBoundingClientRect();
                 AppState.isSelecting = true;
                 AppState.selectionStart = {
@@ -755,7 +829,7 @@
                 AppState.selectionEnd = null;
             };
 
-            overlay.onmousemove = (e) => {
+            overlay.onpointermove = (e) => {
                 if (!AppState.isSelecting) return;
                 const rect = overlay.getBoundingClientRect();
                 AppState.selectionEnd = {
@@ -765,9 +839,10 @@
                 drawDragOverlay();
             };
 
-            overlay.onmouseup = () => {
+            overlay.onpointerup = (e) => {
                 if (!AppState.isSelecting) return;
                 AppState.isSelecting = false;
+                overlay.releasePointerCapture(e.pointerId);
                 
                 if (AppState.selectionStart && AppState.selectionEnd) {
                     const x = Math.min(AppState.selectionStart.x, AppState.selectionEnd.x);
@@ -775,10 +850,19 @@
                     const w = Math.abs(AppState.selectionStart.x - AppState.selectionEnd.x);
                     const h = Math.abs(AppState.selectionStart.y - AppState.selectionEnd.y);
 
+                    // Adjust coordinates back to standard reference scale (1.5) for consistency across devices
+                    const standardScale = 1.5;
+                    const scaleRatio = standardScale / AppState.templateScale;
+
                     if (w > 10 && h > 10) {
-                        AppState.selectionBox = { x, y, w, h };
+                        AppState.selectionBox = {
+                            x: x * scaleRatio,
+                            y: y * scaleRatio,
+                            w: w * scaleRatio,
+                            h: h * scaleRatio
+                        };
                         document.getElementById('selected-coords-indicator').textContent = 
-                            `X: ${Math.round(x)}, Y: ${Math.round(y)} (${Math.round(w)}x${Math.round(h)})`;
+                            `X: ${Math.round(x * scaleRatio)}, Y: ${Math.round(y * scaleRatio)} (${Math.round(w * scaleRatio)}x${Math.round(h * scaleRatio)})`;
                     }
                 }
             };
@@ -812,18 +896,26 @@
             const overlay = document.getElementById('pdf-template-overlay');
             const ctx = overlay.getContext('2d');
 
+            const standardScale = 1.5;
+            const ratio = AppState.templateScale / standardScale;
+
             AppState.questions.forEach(q => {
                 if (q.pageIndex !== AppState.templatePageIndex) return;
                 
+                const rx = q.rect.x * ratio;
+                const ry = q.rect.y * ratio;
+                const rw = q.rect.w * ratio;
+                const rh = q.rect.h * ratio;
+
                 ctx.strokeStyle = '#4f46e5';
                 ctx.lineWidth = 2;
                 ctx.fillStyle = 'rgba(79, 70, 229, 0.05)';
-                ctx.fillRect(q.rect.x, q.rect.y, q.rect.w, q.rect.h);
-                ctx.strokeRect(q.rect.x, q.rect.y, q.rect.w, q.rect.h);
+                ctx.fillRect(rx, ry, rw, rh);
+                ctx.strokeRect(rx, ry, rw, rh);
 
                 ctx.fillStyle = '#4f46e5';
                 ctx.font = 'bold 11px sans-serif';
-                ctx.fillText(`${q.parentGroup ? q.parentGroup + ' - ' : ''}${q.name} (${q.maxScore}点)`, q.rect.x + 5, q.rect.y + 16);
+                ctx.fillText(`${q.parentGroup ? q.parentGroup + ' - ' : ''}${q.name} (${q.maxScore}点)`, rx + 5, ry + 16);
             });
         }
 
@@ -1054,6 +1146,46 @@
             document.getElementById('grading-progress-text').textContent = `${gradedCount}/${total} (${percent}%)`;
         }
 
+        // Grading Viewport Scaling controllers
+        function adjustGradingScale(factor) {
+            AppState.gradingScale = Math.max(0.4, Math.min(4.0, AppState.gradingScale * factor));
+            renderActiveGradingCanvas();
+        }
+
+        async function fitGradingWidth() {
+            const student = AppState.students[AppState.activeStudentIndex];
+            const question = AppState.questions.find(q => q.id === AppState.activeQuestionId);
+            if (!student || !question || !student.fileData) return;
+            try {
+                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(question.pageIndex + 1);
+                const viewport = page.getViewport({ scale: 1.0 });
+                const parentWidth = document.getElementById('grading-canvas-container').clientWidth - 40;
+                AppState.gradingScale = parentWidth / viewport.width;
+                renderActiveGradingCanvas();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function fitGradingHeight() {
+            const student = AppState.students[AppState.activeStudentIndex];
+            const question = AppState.questions.find(q => q.id === AppState.activeQuestionId);
+            if (!student || !question || !student.fileData) return;
+            try {
+                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(question.pageIndex + 1);
+                const viewport = page.getViewport({ scale: 1.0 });
+                const parentHeight = document.getElementById('grading-canvas-container').clientHeight - 40;
+                AppState.gradingScale = parentHeight / viewport.height;
+                renderActiveGradingCanvas();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
         // CORE CANVAS RENDERING WITH HIGH QUALITY CROPPING
         async function renderActiveGradingCanvas() {
             const student = AppState.students[AppState.activeStudentIndex];
@@ -1062,6 +1194,7 @@
             if (!student || !question || !student.fileData) return;
 
             document.getElementById('grading-current-student-name').textContent = student.name;
+            document.getElementById('canvas-zoom-status').textContent = `${Math.round(AppState.gradingScale * 100)}% 表示`;
 
             try {
                 const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
@@ -1071,7 +1204,8 @@
                 const canvas = document.getElementById('grading-pdf-canvas');
                 const context = canvas.getContext('2d');
 
-                const viewport = page.getViewport({ scale: 2.0 });
+                // Render dynamically using active gradingScale zoom factor
+                const viewport = page.getViewport({ scale: AppState.gradingScale });
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
 
@@ -1118,7 +1252,9 @@
 
         function focusCanvasViewportOnQuestionRect(qRect, viewport) {
             const container = document.getElementById('grading-canvas-container');
-            const scaleRatio = 2.0 / 1.5;
+            const standardScale = 1.5;
+            const scaleRatio = AppState.gradingScale / standardScale;
+            
             const targetX = qRect.x * scaleRatio;
             const targetY = qRect.y * scaleRatio;
 
@@ -1127,6 +1263,7 @@
             wrapper.style.width = `${viewport.width}px`;
             wrapper.style.height = `${viewport.height}px`;
 
+            // Center the cropped question within container, keeping scrolling fully accessible
             container.scrollLeft = targetX - padding;
             container.scrollTop = targetY - padding;
         }
@@ -1204,7 +1341,8 @@
             const record = AppState.grades[student.id][q.id];
             if (!record) return;
 
-            const ratio = 2.0 / 1.5; 
+            const standardScale = 1.5;
+            const ratio = AppState.gradingScale / standardScale; 
             
             let markX = record.stampPos.gradeX * ratio;
             let markY = record.stampPos.gradeY * ratio;
@@ -1212,60 +1350,68 @@
             let boxY = record.stampPos.boxY * ratio;
 
             ctx.strokeStyle = '#e11d48'; 
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 4 * Math.sqrt(ratio); // Keep aesthetic scaling crisp
             ctx.shadowBlur = 4;
             ctx.shadowColor = 'rgba(225, 29, 72, 0.2)';
 
+            const stampRadius = 26 * ratio;
+            const markSize = 16 * ratio;
+
+            // Draw vector annotations based on score thresholds
             if (score === q.maxScore) {
                 ctx.beginPath();
-                ctx.arc(markX, markY, 26, 0, Math.PI * 2);
+                ctx.arc(markX, markY, stampRadius, 0, Math.PI * 2);
                 ctx.stroke();
                 document.getElementById('stamp-indicator-icon').textContent = '○ (満点)';
             } else if (score === 0) {
                 ctx.beginPath();
-                ctx.moveTo(markX - 16, markY - 5);
-                ctx.lineTo(markX - 4, markY + 12);
-                ctx.lineTo(markX + 20, markY - 14);
+                ctx.moveTo(markX - markSize, markY - (markSize/3));
+                ctx.lineTo(markX - (markSize/4), markY + (markSize * 0.75));
+                ctx.lineTo(markX + markSize, markY - markSize);
                 ctx.stroke();
                 document.getElementById('stamp-indicator-icon').textContent = '✓ (零点)';
             } else {
                 ctx.beginPath();
-                ctx.moveTo(markX, markY - 24);
-                ctx.lineTo(markX - 25, markY + 18);
-                ctx.lineTo(markX + 25, markY + 18);
+                ctx.moveTo(markX, markY - stampRadius);
+                ctx.lineTo(markX - stampRadius, markY + (stampRadius * 0.75));
+                ctx.lineTo(markX + stampRadius, markY + (stampRadius * 0.75));
                 ctx.closePath();
                 ctx.stroke();
 
                 ctx.shadowBlur = 0;
                 ctx.fillStyle = '#e11d48';
-                ctx.font = 'bold 16px sans-serif';
+                ctx.font = `bold ${Math.round(16 * ratio)}px sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(`+${score}`, markX, markY + 4);
+                ctx.fillText(`+${score}`, markX, markY + (4 * ratio));
                 
                 document.getElementById('stamp-indicator-icon').textContent = `△ (部分点: +${score})`;
             }
 
+            // Draw vector box score stamp
             ctx.shadowBlur = 0;
             ctx.strokeStyle = '#e11d48';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 3 * Math.sqrt(ratio);
             
-            ctx.strokeRect(boxX, boxY, 46, 42);
+            const boxW = 46 * ratio;
+            const boxH = 42 * ratio;
+            ctx.strokeRect(boxX, boxY, boxW, boxH);
             
             ctx.fillStyle = '#e11d48';
-            ctx.font = 'bold 20px monospace';
+            ctx.font = `bold ${Math.round(20 * ratio)}px monospace`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(score, boxX + 23, boxY + 21);
+            ctx.fillText(score, boxX + (boxW/2), boxY + (boxH/2));
 
             document.getElementById('stamp-indicator-box').textContent = `四角得点 [${score}]`;
         }
 
+        // SOLID TOUCH STAMP DRAGGING ENGINE FOR IPAD & TOUGH TOUCHPAD DEVICES
         function setupInteractiveOverlayDragging() {
             const overlay = document.getElementById('grading-interactive-overlay');
-            const ratio = 2.0 / 1.5;
+            const standardScale = 1.5;
 
-            overlay.onmousedown = (e) => {
+            overlay.onpointerdown = (e) => {
                 const rect = overlay.getBoundingClientRect();
                 const mouseX = (e.clientX - rect.left) * (overlay.width / rect.width);
                 const mouseY = (e.clientY - rect.top) * (overlay.height / rect.height);
@@ -1277,26 +1423,34 @@
                 const record = AppState.grades[student.id][q.id];
                 if (!record) return;
 
+                const ratio = AppState.gradingScale / standardScale;
+
                 const markX = record.stampPos.gradeX * ratio;
                 const markY = record.stampPos.gradeY * ratio;
                 const distGrade = Math.hypot(mouseX - markX, mouseY - markY);
 
+                const boxW = 46 * ratio;
+                const boxH = 42 * ratio;
                 const boxX = (record.stampPos.boxX + 23) * ratio;
                 const boxY = (record.stampPos.boxY + 21) * ratio;
                 const distBox = Math.hypot(mouseX - boxX, mouseY - boxY);
 
-                if (distGrade < 30) {
+                const grabRange = 36 * ratio; // Generous grab range for touch accuracy
+
+                if (distGrade < grabRange) {
+                    overlay.setPointerCapture(e.pointerId);
                     AppState.activeStampDragging = true;
                     AppState.activeStampType = 'grade';
                     AppState.stampOffset = { x: mouseX - markX, y: mouseY - markY };
-                } else if (distBox < 30) {
+                } else if (distBox < grabRange) {
+                    overlay.setPointerCapture(e.pointerId);
                     AppState.activeStampDragging = true;
                     AppState.activeStampType = 'scorebox';
                     AppState.stampOffset = { x: mouseX - boxX, y: mouseY - boxY };
                 }
             };
 
-            overlay.onmousemove = (e) => {
+            overlay.onpointermove = (e) => {
                 if (!AppState.activeStampDragging) return;
                 const rect = overlay.getBoundingClientRect();
                 const mouseX = (e.clientX - rect.left) * (overlay.width / rect.width);
@@ -1307,7 +1461,7 @@
                 const record = AppState.grades[student.id][q.id];
                 if (!record) return;
 
-                const ratio = 2.0 / 1.5;
+                const ratio = AppState.gradingScale / standardScale;
 
                 if (AppState.activeStampType === 'grade') {
                     record.stampPos.gradeX = (mouseX - AppState.stampOffset.x) / ratio;
@@ -1320,9 +1474,11 @@
                 drawGradingStampsOnOverlay();
             };
 
-            overlay.onmouseup = () => {
+            overlay.onpointerup = (e) => {
+                if (!AppState.activeStampDragging) return;
                 AppState.activeStampDragging = false;
                 AppState.activeStampType = null;
+                overlay.releasePointerCapture(e.pointerId);
             };
         }
 
@@ -1528,7 +1684,7 @@
         function exportCSV() {
             if (AppState.students.length === 0 || AppState.questions.length === 0) return;
 
-            let csvContent = "\uFEFF"; 
+            let csvContent = "\uFEFF"; // UTF-8 BOM for Japanese Excel compatibility
             const parentGroups = [...new Set(AppState.questions.map(q => q.parentGroup).filter(Boolean))];
             const headers = ["学生氏名"];
             
@@ -1615,7 +1771,7 @@
                             id: meta.id,
                             name: meta.name,
                             fileName: meta.fileName,
-                            fileData: null, 
+                            fileData: null, // User needs to re-upload PDFs after reload
                             pageCount: 1
                         }));
                     }
@@ -1650,6 +1806,7 @@
                 const s = AppState.students[i];
                 
                 try {
+                    // Safe cloning to prevent worker detachment crashes
                     const pdfDoc = await PDFLib.PDFDocument.load(new Uint8Array(s.fileData.slice(0)));
                     const helveticaFont = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
                     const pages = pdfDoc.getPages();
@@ -1663,6 +1820,7 @@
 
                         const { width, height } = page.getSize();
                         
+                        // Reference scale calculations (calculated relative to standard template scale)
                         const canvasW = document.getElementById('pdf-template-canvas').width || 800;
                         const canvasH = document.getElementById('pdf-template-canvas').height || 1000;
 
@@ -1677,6 +1835,7 @@
 
                         const redColor = PDFLib.rgb(0.88, 0.11, 0.27);
 
+                        // Draw vector circles, checkmarks and triangles directly on PDF layers
                         if (rec.score === q.maxScore) {
                             page.drawCircle({
                                 x: markPdfX,
@@ -1727,6 +1886,7 @@
                             });
                         }
 
+                        // Draw custom vector box score stamp
                         const boxCanvasX = rec.stampPos.boxX;
                         const boxCanvasY = rec.stampPos.boxY;
 
@@ -1777,6 +1937,7 @@
         function downloadPerformanceReport() {
             if (AppState.students.length === 0) return;
 
+            // Escaping nested script tags carefully to avoid SyntaxErrors
             let reportHTML = `<!DOCTYPE html>
             <html lang="ja">
             <head>
@@ -1805,7 +1966,7 @@
                             <td class="py-2 font-bold text-slate-700">${q.parentGroup ? q.parentGroup + ' ' : ''}${q.name}</td>
                             <td class="py-2 font-mono text-center font-bold text-slate-900">${val} / ${q.maxScore}</td>
                             <td class="py-2 text-right">
-                                ${val === q.maxScore ? '<span class="text-emerald-600 font-bold">○ 満点</span>' : val === 0 ? '<span class="text-rose-500">✓ 零点</span>' : '<span class="text-amber-500">△ 部分</span>'}
+                                \${val === q.maxScore ? '<span class="text-emerald-600 font-bold">○ 満点</span>' : val === 0 ? '<span class="text-rose-500">✓ 零点</span>' : '<span class="text-amber-500">△ 部分</span>'}
                             </td>
                         </tr>
                     `;
@@ -1828,10 +1989,10 @@
                         <div class="flex justify-between items-center border-b border-slate-200 pb-3">
                             <div>
                                 <span class="text-xs text-slate-400 font-bold block">STUDENT GRADE CARD</span>
-                                <h3 class="text-lg font-black text-slate-800">${student.name} 殿</h3>
+                                <h3 class="text-lg font-black text-slate-800">\${student.name} 殿</h3>
                             </div>
-                            <div class="px-4 py-2 ${badgeColor} rounded-xl font-black text-sm">
-                                総得点: ${sumScore} / ${maxPossible} 点
+                            <div class="px-4 py-2 \${badgeColor} rounded-xl font-black text-sm">
+                                総得点: \${sumScore} / \${maxPossible} 点
                             </div>
                         </div>
 
@@ -1844,12 +2005,12 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                ${rowsHTML}
+                                \${rowsHTML}
                             </tbody>
                         </table>
 
                         <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-600 leading-relaxed font-semibold">
-                            ${feedback}
+                            \${feedback}
                         </div>
                     </div>
                 `;
