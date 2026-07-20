@@ -1,58 +1,1876 @@
-<!DOCTYPE html><html lang="ja"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/><title>Yahoo! JAPAN</title><meta name="description" content="あなたの毎日をアップデートする情報ポータル。検索、ニュース、天気、スポーツ、メール、ショッピング、オークションなど便利なサービスを展開しています。"/><meta name="robots" content="noodp"/><meta name="viewport" content="width=1010"/><link rel="dns-prefetch" href="//s.yimg.jp"/><link rel="dns-prefetch" href="//yads.c.yimg.jp"/><meta name="google-site-verification" content="fsLMOiigp5fIpCDMEVodQnQC7jIY1K3UXW5QkQcBmVs"/><link rel="alternate" href="android-app://jp.co.yahoo.android.yjtop/yahoojapan/home/top"/><link rel="alternate" media="only screen and (max-width: 640px)" href="https://m.yahoo.co.jp/"/><link rel="canonical" href="https://www.yahoo.co.jp/"/><link rel="shortcut icon" href="https://s.yimg.jp/c/icon/s/bsc/2.0/favicon.ico" type="image/vnd.microsoft.icon"/><link rel="icon" href="https://s.yimg.jp/c/icon/s/bsc/2.0/favicon.ico" type="image/vnd.microsoft.icon"/><link rel="apple-touch-icon" href="https://s.yimg.jp/c/icon/s/bsc/2.0/y120.png"/><meta property="og:title" content="Yahoo! JAPAN"/><meta property="og:type" content="website"/><meta property="og:url" content="https://www.yahoo.co.jp/"/><meta property="og:image" content="https://s.yimg.jp/images/top/ogp/fb_y_1500px.png"/><meta property="og:description" content="あなたの毎日をアップデートする情報ポータル。検索、ニュース、天気、スポーツ、メール、ショッピング、オークションなど便利なサービスを展開しています。"/><meta property="og:site_name" content="Yahoo! JAPAN"/><meta property="twitter:card" content="summary_large_image"/><meta property="twitter:site" content="@Yahoo_JAPAN_PR"/><meta property="twitter:image" content="https://s.yimg.jp/images/top/ogp/tw_y_1400px.png"/><meta property="fb:app_id" content="472870002762883"/><link rel="stylesheet" href="//s.yimg.jp/images/yjtop-pc/orion/20260708-044713/bundle_20260708-044713.css"/><script>window.onbeforeunload = function() {}</script><script>
-            var TLDataContext = {
-              ual : {
-                pageview : {
-                  service: "toppage",
-                  apptype: "web",
-                  opttype: "pc",
-                  content_id : '',
-                  id_type : '',
-                  nopv : 'false',
-                  mtestid: "",
-                  ss_join_id : '',
-                  ss_join_id_type : '',
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>串刺し採点システム - Kushizashi Grade Pro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js for rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- PDF-Lib for high-fidelity output generation -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Custom highlight for area selection */
+        .selection-box {
+            border: 2px dashed #ef4444;
+            background-color: rgba(239, 68, 68, 0.15);
+            position: absolute;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Header -->
+    <header class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="bg-gradient-to-tr from-rose-500 to-red-600 p-2.5 rounded-xl shadow-md text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-slate-950 to-slate-800 bg-clip-text text-transparent">串刺し採点 - Kushizashi Grade Pro</h1>
+                <p class="text-xs text-slate-400 font-medium">同一設問の一括連続スピード採点 & アノテーション生成</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <!-- Save/Load Buttons -->
+            <button onclick="saveSession()" class="flex items-center space-x-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-medium rounded-lg transition-all shadow-sm">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                <span>保存 (JSON)</span>
+            </button>
+            <label class="flex items-center space-x-1.5 px-3 py-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 text-sm font-medium rounded-lg transition-all shadow-sm cursor-pointer">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                <span>復元 (JSON)</span>
+                <input type="file" id="import-json" accept=".json" class="hidden" onchange="loadSession(event)">
+            </label>
+        </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Mode Tabs Sidebar -->
+        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0 border-r border-slate-800">
+            <!-- Mode Switching Panel -->
+            <div class="p-4 space-y-2">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2 mb-1">ワークスペース</p>
+                
+                <button id="tab-btn-students" onclick="switchTab('students')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all bg-rose-600 text-white shadow-md shadow-rose-950/20">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <span>1. 答案PDF読込</span>
+                </button>
+                
+                <button id="tab-btn-questions" onclick="switchTab('questions')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2zm0 8a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2z"></path></svg>
+                    <span>2. 設問・配点設定</span>
+                </button>
+                
+                <button id="tab-btn-grading" onclick="switchTab('grading')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    <span>3. 串刺し採点</span>
+                </button>
+                
+                <button id="tab-btn-exports" onclick="switchTab('exports')" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>4. 成績表・PDF出力</span>
+                </button>
+            </div>
+
+            <!-- Context Info Area -->
+            <div class="mt-auto p-4 border-t border-slate-800 bg-slate-950/40 text-xs space-y-2">
+                <div>
+                    <span class="text-slate-500 block font-medium">現在読込中の答案数:</span>
+                    <span id="sidebar-student-count" class="font-bold text-rose-400">0 名</span>
+                </div>
+                <div>
+                    <span class="text-slate-500 block font-medium">設定された設問数:</span>
+                    <span id="sidebar-question-count" class="font-bold text-indigo-400">0 問</span>
+                </div>
+                <div class="pt-1">
+                    <span class="text-slate-500 block font-medium">大問合計設定:</span>
+                    <span id="sidebar-grand-total-status" class="font-semibold text-teal-400">合計点自動算出</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Content Container -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-50">
+
+            <!-- ================= SCREEN 1: STUDENTS UPLOAD ================= -->
+            <section id="screen-students" class="flex-1 p-6 overflow-y-auto space-y-6">
+                <div class="max-w-4xl mx-auto space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h2 class="text-lg font-bold text-slate-900 mb-2">学生答案PDFの読み込み</h2>
+                        <p class="text-sm text-slate-500 mb-6">複数の答案用紙PDF（1つのPDF＝1人の学生）をまとめてドロップ、または選択してください。</p>
+                        
+                        <!-- Drag & Drop Zone -->
+                        <div id="drop-zone" class="border-3 border-dashed border-slate-200 hover:border-rose-400 bg-slate-50 hover:bg-rose-50/20 rounded-2xl p-10 text-center transition-all cursor-pointer group relative">
+                            <input type="file" id="pdf-files-input" multiple accept=".pdf" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handleStudentFiles(event)">
+                            <div class="space-y-3">
+                                <div class="inline-flex p-4 bg-white rounded-full text-slate-400 shadow-sm group-hover:text-rose-500 group-hover:scale-110 transition-all duration-300">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="text-base font-bold text-slate-800">ファイルをドラッグ＆ドロップ</p>
+                                    <p class="text-xs text-slate-400 mt-1">またはコンピュータからファイルを選択 (複数選択可)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loaded Students List -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base font-bold text-slate-900">読込済みの学生リスト</h3>
+                            <button onclick="clearStudents()" class="text-xs font-semibold text-rose-600 hover:underline">全員削除</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-xs font-bold text-slate-400 uppercase">
+                                        <th class="py-3 px-4">並び順</th>
+                                        <th class="py-3 px-4">学生氏名 / ID (編集可)</th>
+                                        <th class="py-3 px-4">ファイル名</th>
+                                        <th class="py-3 px-4 text-right">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="student-list-tbody" class="divide-y divide-slate-100 text-sm">
+                                    <tr class="no-students-placeholder">
+                                        <td colspan="4" class="py-8 text-center text-slate-400">
+                                            学生が登録されていません。上のエリアから答案PDFを追加してください。
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SCREEN 2: QUESTION SELECTION ================= -->
+            <section id="screen-questions" class="flex-1 flex overflow-hidden hidden">
+                <!-- Left Pane: Area & Point Definition -->
+                <div class="w-80 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+                        <h3 class="text-sm font-bold text-slate-900">設問の追加・配点</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">右の答案用紙から、ドラッグで設問の解答エリアを設定してください。</p>
+                    </div>
+
+                    <div class="p-4 border-b border-slate-100 space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">大問グループ (例: 大問1, 任意)</label>
+                            <input type="text" id="q-parent-group" placeholder="大問1" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">設問名</label>
+                                <input type="text" id="q-name" placeholder="問1" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">満点（配点）</label>
+                                <input type="number" id="q-max-score" min="1" placeholder="10" class="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                            <span>範囲選択座標:</span>
+                            <span id="selected-coords-indicator" class="font-mono text-indigo-600 font-semibold">未選択 (ドラッグして指定)</span>
+                        </div>
+                        <button onclick="addQuestion()" class="w-full py-2 bg-slate-900 text-white font-bold text-sm rounded-lg hover:bg-slate-800 transition-all shadow-sm">
+                            設問エリアを確定して追加
+                        </button>
+                    </div>
+
+                    <!-- Active Questions List -->
+                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-2" id="questions-config-list">
+                        <!-- Dynamic Question list injected here -->
+                    </div>
+                </div>
+
+                <!-- Right Pane: Interactive PDF Selector -->
+                <div class="flex-1 flex flex-col overflow-hidden bg-slate-100">
+                    <div class="bg-white px-6 py-2 border-b border-slate-200 flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold text-slate-500">基準となるテンプレート用紙:</span>
+                            <select id="template-student-selector" onchange="changeTemplateStudent()" class="px-2 py-1 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-rose-500">
+                                <!-- Option list of uploaded students -->
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="prevTemplatePage()" class="p-1 bg-slate-50 hover:bg-slate-200 border border-slate-200 rounded text-xs">&larr; 前へ</button>
+                            <span id="template-page-indicator" class="text-xs font-semibold text-slate-600">ページ 1 / 1</span>
+                            <button onclick="nextTemplatePage()" class="p-1 bg-slate-50 hover:bg-slate-200 border border-slate-200 rounded text-xs">次へ &rarr;</button>
+                        </div>
+                    </div>
+
+                    <!-- PDF Template Crop Viewport -->
+                    <div class="flex-1 overflow-auto p-6 flex justify-center items-start custom-scrollbar relative" id="pdf-template-container-parent">
+                        <div class="relative shadow-xl rounded-lg bg-white overflow-hidden" id="pdf-template-wrapper" style="user-select: none;">
+                            <canvas id="pdf-template-canvas"></canvas>
+                            <!-- Overlay canvas for selection box -->
+                            <canvas id="pdf-template-overlay" class="absolute top-0 left-0 w-full h-full cursor-crosshair"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SCREEN 3: KUSHIZASHI GRADING WORKSPACE ================= -->
+            <section id="screen-grading" class="flex-1 flex overflow-hidden hidden">
+                <!-- Left Grading Sidebar: Questions & Stats -->
+                <div class="w-80 bg-white border-r border-slate-200 flex flex-col flex-shrink-0">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+                        <span class="text-xs font-bold text-slate-400 block uppercase">現在の採点対象の設問</span>
+                        <select id="grading-question-selector" onchange="onGradingQuestionChanged()" class="w-full mt-2 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 font-bold text-slate-800">
+                            <!-- Question selections injected here -->
+                        </select>
+                    </div>
+
+                    <!-- Students Quick Jump List with Grading Status -->
+                    <div class="flex-1 overflow-y-auto p-3 custom-scrollbar space-y-1" id="grading-student-list">
+                        <!-- Student grading statuses injected here -->
+                    </div>
+                </div>
+
+                <!-- Center/Right Kushizashi Arena -->
+                <div class="flex-1 flex flex-col overflow-hidden">
+                    
+                    <!-- Student Navigation Header -->
+                    <div class="bg-white px-6 py-3 border-b border-slate-200 flex items-center justify-between flex-shrink-0 shadow-sm z-10">
+                        <div class="flex items-center space-x-3">
+                            <button onclick="prevStudent()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-xs font-bold">
+                                &larr; 前の生徒 (A / ⇧+Tab)
+                            </button>
+                            <div class="text-center">
+                                <span class="text-xs text-slate-400 block font-semibold">採点中の答案</span>
+                                <h3 id="grading-current-student-name" class="text-base font-bold text-slate-900 leading-tight">未選択</h3>
+                            </div>
+                            <button onclick="nextStudent()" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all text-xs font-bold">
+                                次の生徒 (D / Tab)
+                            </button>
+                        </div>
+
+                        <div class="flex items-center space-x-3 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-xl">
+                            <span class="text-xs text-indigo-500 font-bold">全体進捗:</span>
+                            <div class="w-32 bg-indigo-200 h-2 rounded-full overflow-hidden">
+                                <div id="grading-progress-bar" class="bg-indigo-600 h-full w-0 transition-all duration-300"></div>
+                            </div>
+                            <span id="grading-progress-text" class="text-xs text-indigo-700 font-bold font-mono">0/0 (0%)</span>
+                        </div>
+                    </div>
+
+                    <!-- Work Panel (Canvas Crop View + Score Inputs) -->
+                    <div class="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-100">
+                        
+                        <!-- Left Panel: Interactive Grader Canvas -->
+                        <div class="flex-1 flex flex-col overflow-hidden">
+                            <div class="p-3 bg-slate-800 text-slate-300 text-xs flex justify-between items-center flex-shrink-0">
+                                <span class="font-medium">解答欄アノテーションエディタ（ドラッグして得点枠・丸バツスタンプを直接移動できます）</span>
+                                <span class="bg-slate-700 px-2 py-0.5 rounded font-mono text-rose-400 font-bold" id="canvas-zoom-status">100% 表示</span>
+                            </div>
+                            
+                            <div class="flex-1 overflow-auto p-4 flex justify-center items-center custom-scrollbar" id="grading-canvas-container">
+                                <div class="relative shadow-2xl rounded-xl border-4 border-slate-300/40 bg-white overflow-hidden" id="grading-canvas-wrapper" style="user-select: none;">
+                                    <canvas id="grading-pdf-canvas"></canvas>
+                                    <canvas id="grading-interactive-overlay" class="absolute top-0 left-0 w-full h-full cursor-crosshair"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Scoring Action Deck -->
+                        <div class="w-full md:w-80 bg-white border-t md:border-t-0 md:border-l border-slate-200 flex flex-col flex-shrink-0">
+                            <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+                                <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">採点スタンプ操作</h4>
+                            </div>
+
+                            <div class="p-4 flex-1 overflow-y-auto space-y-4 custom-scrollbar">
+                                <!-- Score buttons grid -->
+                                <div>
+                                    <span class="text-xs font-bold text-slate-400 block mb-2">クイック配点</span>
+                                    <div class="grid grid-cols-3 gap-2" id="quick-score-buttons">
+                                        <!-- Will render buttons like Full, Half, 0 -->
+                                    </div>
+                                </div>
+
+                                <!-- Manual Score Input -->
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 mb-2">点数入力</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="number" id="manual-score-input" step="0.5" min="0" placeholder="0" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-lg font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20" oninput="validateManualScoreInput()">
+                                        <span class="text-sm text-slate-400 font-bold">/</span>
+                                        <span id="manual-score-max" class="text-base font-bold text-slate-600">10 点</span>
+                                    </div>
+                                </div>
+
+                                <!-- Placement Coordinates -->
+                                <div class="space-y-2">
+                                    <span class="text-xs font-bold text-slate-400 block">採点スタンプ生成（自動）</span>
+                                    <div class="p-3 bg-rose-50/50 border border-rose-100/60 rounded-xl space-y-2">
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="text-slate-500 font-medium">1. 正誤判定印:</span>
+                                            <span id="stamp-indicator-icon" class="font-bold text-rose-600 font-mono">-</span>
+                                        </div>
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="text-slate-500 font-medium">2. 得点欄印 (四角枠):</span>
+                                            <span id="stamp-indicator-box" class="font-bold text-rose-600 font-mono">-</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-[11px] text-slate-400 leading-relaxed">※点数に応じたスタンプが自動選択されます。PDF出力時にそのまま画像に描画されます。</p>
+                                </div>
+
+                                <!-- Score Stamp Coordinates & Placement Controls -->
+                                <div class="pt-2 border-t border-slate-100 space-y-2">
+                                    <span class="text-xs font-bold text-slate-400 block">スタンプ描画配置</span>
+                                    <div class="grid grid-cols-2 gap-1.5 text-xs">
+                                        <button onclick="resetStampPositions('top-right')" class="py-1.5 border border-slate-200 hover:bg-slate-50 rounded font-medium text-slate-600">右上固定</button>
+                                        <button onclick="resetStampPositions('center')" class="py-1.5 border border-slate-200 hover:bg-slate-50 rounded font-medium text-slate-600">中央固定</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Grade Commit Action -->
+                            <div class="p-4 bg-slate-50 border-t border-slate-100">
+                                <button onclick="commitGrading()" class="w-full py-3 bg-rose-600 text-white font-bold rounded-xl shadow-md hover:bg-rose-500 hover:shadow-lg transition-all flex items-center justify-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                    <span>採点を確定して保存</span>
+                                </button>
+                                <div class="mt-2 text-center">
+                                    <span class="text-[10px] text-slate-400 font-medium font-mono">確定・移動ショートカット: Enter / Space</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SCREEN 4: EXPORTS & ANALYTICS ================= -->
+            <section id="screen-exports" class="flex-1 p-6 overflow-y-auto space-y-6 hidden">
+                <div class="max-w-6xl mx-auto space-y-6">
+                    
+                    <!-- Dashboard Statistics cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                            <div class="bg-rose-50 p-3 rounded-xl text-rose-500">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <span class="text-xs text-slate-400 block font-bold uppercase">採点進捗率</span>
+                                <h4 id="stat-progress" class="text-xl font-black text-slate-900">0.0%</h4>
+                            </div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                            <div class="bg-indigo-50 p-3 rounded-xl text-indigo-500">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                            <div>
+                                <span class="text-xs text-slate-400 block font-bold uppercase">全体平均点</span>
+                                <h4 id="stat-average" class="text-xl font-black text-slate-900">0.0 / 0.0 点</h4>
+                            </div>
+                        </div>
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                            <div class="bg-emerald-50 p-3 rounded-xl text-emerald-500">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            </div>
+                            <div>
+                                <span class="text-xs text-slate-400 block font-bold uppercase">満点合格者数</span>
+                                <h4 id="stat-perfect-scores" class="text-xl font-black text-slate-900">0 名</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Options Control Deck -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="text-base font-bold text-slate-900 mb-4">成果物・採点結果のダウンロード</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            
+                            <!-- PDF Annotation Exporter -->
+                            <div class="border border-slate-100 p-4 rounded-xl hover:bg-rose-50/10 transition-all space-y-3">
+                                <div class="text-rose-600 font-bold text-sm flex items-center space-x-1.5">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <span>答案PDFにアノテーションを書き出す</span>
+                                </div>
+                                <p class="text-xs text-slate-500 leading-relaxed">採点した「○」「△（点数入り）」「✓」「得点四角枠」を答案PDFの上に鮮明な赤インク風スタンプとして合成します。</p>
+                                <button onclick="exportGradedPDFs()" class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold rounded-lg transition-all shadow-sm">
+                                    丸バツ入り採点後PDFを出力
+                                </button>
+                            </div>
+
+                            <!-- CSV Exporter -->
+                            <div class="border border-slate-100 p-4 rounded-xl hover:bg-indigo-50/10 transition-all space-y-3">
+                                <div class="text-indigo-600 font-bold text-sm flex items-center space-x-1.5">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <span>総合点数評価シート (CSV)</span>
+                                </div>
+                                <p class="text-xs text-slate-500 leading-relaxed">全受験生の個別設問ごとの点数、大問総合計、総得点（自動算出）を格納したCSVデータをダウンロードします。</p>
+                                <button onclick="exportCSV()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-all shadow-sm">
+                                    CSVスコアシートをDL
+                                </button>
+                            </div>
+
+                            <!-- Individual Performance Card -->
+                            <div class="border border-slate-100 p-4 rounded-xl hover:bg-teal-50/10 transition-all space-y-3">
+                                <div class="text-teal-600 font-bold text-sm flex items-center space-x-1.5">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <span>個人成績表カード</span>
+                                </div>
+                                <p class="text-xs text-slate-500 leading-relaxed">個人ごとの設問毎得点、合否判定基準となる分布などを美しく表示したカード（HTMLファイル）を出力します。</p>
+                                <button onclick="downloadPerformanceReport()" class="w-full py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-lg transition-all shadow-sm">
+                                    個人成績カルテをダウンロード
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Detailed Grades Matrix Sheet -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base font-bold text-slate-900">採点マトリクス・全受講生成績表</h3>
+                            <span class="text-xs text-slate-400 font-medium">※各マス目には設問毎の配点に対する獲得点数が格納されています</span>
+                        </div>
+                        <div class="overflow-x-auto custom-scrollbar border border-slate-100 rounded-xl">
+                            <table class="w-full text-left border-collapse" id="matrix-table">
+                                <!-- Dynamically generated Grade matrix -->
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Status / Notification Modal overlay -->
+    <div id="status-toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 transform translate-y-24 opacity-0 z-50">
+        <div class="bg-rose-500/20 text-rose-400 p-1 rounded-full" id="toast-icon-wrapper">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="toast-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+            <p class="text-xs text-slate-400 font-bold" id="toast-title">通知</p>
+            <p class="text-xs font-semibold text-white" id="toast-body">処理が完了しました。</p>
+        </div>
+    </div>
+
+    <script>
+        // Set up PDF.js Global Worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // State Manager
+        const AppState = {
+            students: [],          // Array of Student objects { id, name, fileName, fileData (ArrayBuffer), pageCount }
+            questions: [],         // Array of Question objects { id, name, parentGroup, maxScore, rect: { x, y, w, h }, pageIndex }
+            grades: {},            // Nested Map: grades[studentId][questionId] = { score, stampPos: { gradeX, gradeY, boxX, boxY } }
+            activeTab: 'students',
+            
+            // Templates / View States
+            templateStudentId: null,
+            templatePageIndex: 0,
+            templatePageCount: 1,
+            
+            // Selection States (Screen 2)
+            selectionStart: null,
+            selectionEnd: null,
+            isSelecting: false,
+
+            // Kushizashi Workspace States (Screen 3)
+            activeQuestionId: null,
+            activeStudentIndex: 0,
+
+            // Canvas states
+            activeStampDragging: false,
+            activeStampType: null, // 'grade' or 'scorebox'
+            stampOffset: { x: 0, y: 0 }
+        };
+
+        // UI Toast Controller
+        function showToast(title, body, type = 'info') {
+            const toast = document.getElementById('status-toast');
+            const tTitle = document.getElementById('toast-title');
+            const tBody = document.getElementById('toast-body');
+            
+            tTitle.textContent = title;
+            tBody.textContent = body;
+            
+            toast.className = "fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 transform translate-y-0 opacity-100 z-50";
+            
+            setTimeout(() => {
+                toast.className = "fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all duration-300 transform translate-y-24 opacity-0 z-50";
+            }, 3000);
+        }
+
+        // Tab Router
+        function switchTab(tabId) {
+            AppState.activeTab = tabId;
+            
+            // Toggle active screen element visibility
+            document.getElementById('screen-students').classList.add('hidden');
+            document.getElementById('screen-questions').classList.add('hidden');
+            document.getElementById('screen-grading').classList.add('hidden');
+            document.getElementById('screen-exports').classList.add('hidden');
+            
+            document.getElementById(`screen-${tabId}`).classList.remove('hidden');
+
+            // Reset navigation tab button classes
+            const tabs = ['students', 'questions', 'grading', 'exports'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                if (t === tabId) {
+                    btn.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all bg-rose-600 text-white shadow-md shadow-rose-950/20";
+                } else {
+                    btn.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all text-slate-400 hover:bg-slate-800 hover:text-slate-200";
                 }
-              }
-            };</script><script async="" src="https://s.yimg.jp/images/ds/managed/1/managed-ual.min.js?tk=4465a92c-f0fd-406f-b519-efd409cc9849&amp;service=toppage"></script><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','GTM-TQJW5V3W');</script><script src="https://yads.c.yimg.jp/js/yads-async.js"></script><link rel="preconnect" href="//logql.yahoo.co.jp"/><link rel="preconnect" href="//yeas.yahoo.co.jp"/><link rel="preconnect" href="//cas.criteo.com"/><link rel="preconnect" href="//ybx-test.yahoo.co.jp"/><link rel="preconnect" href="//quriosity.yahoo.co.jp"/></head><body><noscript><iframe title="Google Tag Manager" src="https://www.googletagmanager.com/ns.html?id=GTM-TQJW5V3W" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript><script>bucket_id_for_ad = ''; bucket_ids = '';</script><script>window.YAHOO = window.YAHOO || {};
-              window.YAHOO.JP = window.YAHOO.JP || {};
-              window.YAHOO.JP.Fp = window.YAHOO.JP.Fp || {};
-              window.YAHOO.JP.Fp.ads = window.YAHOO.JP.Fp.ads || {};
-              window.YAHOO.JP.Fp.ads.sidehide = true;</script><div id="wrapper" class="_1DyDVN-3FsqGF_QKLg1M9G" data-rma-pos="GYJ"><div id="ContentWrapper"><header class="_2ZLZK6xsD6ls7W_ryou_ED"><div id="Masthead" class="_1mo4G7fxHMqUog3vJGxY2_ ult__mods"><h1 class="_3YIqBohnzWyU3NQ8zb-mQI _1dr5aVDbNPF63JCS2bJhij"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://www.yahoo.co.jp" data-cl-params="_cl_vmodule:header;_cl_link:logo;_cl_position:0">Yahoo! JAPAN</a></h1><div class="_15h66qPnVy4iQzPepgAaiY"><ul class="_6iDyy-CUks251J9k1epBP"><li class="_3gsf81y-6_ZDi-j-tMaVHe"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://travel.yahoo.co.jp/ikCo.ashx?cosid=y_010017&amp;cosuid=ytmh&amp;surl=%2F&amp;sc_e=ytmh" data-cl-params="_cl_vmodule:header;_cl_link:travel;_cl_position:0" aria-label="トラベルへ遷移する"><p class="oLvk9L5Yk-9JOuzi-OHW5"><span class="t_jb9bKlgIcajcRS2hZAP">トラベル</span><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _1yEKxUFSw-Xv2gaBZsYRuI" style="width:38px;height:38px"></span></p></a></li><li class="_3gsf81y-6_ZDi-j-tMaVHe"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://www.paypay-card.co.jp?utm_source=YTOP&amp;utm_medium=mhd&amp;utm_campaign=pc" data-cl-params="_cl_vmodule:header;_cl_link:paypaycard;_cl_position:0" aria-label="カードへ遷移する"><p class="oLvk9L5Yk-9JOuzi-OHW5"><span class="t_jb9bKlgIcajcRS2hZAP">カード</span><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij P1WzQfoRll3q8GIGneUYg" style="width:36px;height:38px"></span></p></a></li><li class="_3gsf81y-6_ZDi-j-tMaVHe"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://mail.yahoo.co.jp/" data-cl-params="_cl_vmodule:header;_cl_link:mail;_cl_position:0" aria-label="メールへ遷移する"><p class="oLvk9L5Yk-9JOuzi-OHW5"><span class="t_jb9bKlgIcajcRS2hZAP">メール</span><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _3Qi5P0lTFbNkWishPzz8tb" style="width:36px;height:38px"></span></p></a></li></ul></div><div class="_2TzkLph0QyL9hAv5c53WeY"><ul class="_6iDyy-CUks251J9k1epBP"><li class="_3gsf81y-6_ZDi-j-tMaVHe"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://premium.yahoo.co.jp/?sc_e=stpage_lyp_mast_head_pc_prem" data-cl-params="_cl_vmodule:header;_cl_link:lyppremium;_cl_position:0" aria-label="プレミアムへ遷移する"><p class="oLvk9L5Yk-9JOuzi-OHW5"><span class="t_jb9bKlgIcajcRS2hZAP">プレミアム</span><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _2iyfDDBChZ2jNNVs7rrbt4" style="width:38px;height:38px"></span></p></a></li><li class="_3gsf81y-6_ZDi-j-tMaVHe"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://auctions.yahoo.co.jp/" data-cl-params="_cl_vmodule:header;_cl_link:auction;_cl_position:0" aria-label="オークションへ遷移する"><p class="oLvk9L5Yk-9JOuzi-OHW5"><span class="t_jb9bKlgIcajcRS2hZAP">オークション</span><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _1K47f2oTmrnpusFOpVVqfY" style="width:38px;height:38px"></span></p></a></li><li class="_3gsf81y-6_ZDi-j-tMaVHe"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://shopping.yahoo.co.jp/?sc_e=ytmh" data-cl-params="_cl_vmodule:header;_cl_link:shopping;_cl_position:0" aria-label="ショッピングへ遷移する"><p class="oLvk9L5Yk-9JOuzi-OHW5"><span class="t_jb9bKlgIcajcRS2hZAP">ショッピング</span><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij MOLSPrtOUmdnYy_LgNt2f" style="width:38px;height:38px"></span></p></a></li></ul></div></div><section id="search" class="ult__mods _1w9b7DyFfTztW-X6_zmnAE"><div class="_2pgJollUxnY09eN4CPKMrS"><h1 class="_1iMgPNrCw806mefWspPVMk _3v9VCsGKsktTB7eaN70w-n">検索</h1><ul class="ZMlm7LHfZujKgm8NY-0N5"><li><a href="https://search.yahoo.co.jp/" class="y9H1Sj9hz4OlEq2_aEt5E" aria-label="ウェブで検索" tabindex="-1" data-cl-params="_cl_vmodule:search;_cl_link:web_tab;_cl_position:0"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR"><span class="_1uQvvM7M_K0hc4e29lRa8 _2B_ETzo6nh1JNMLebSi_2p">ウェブ</span></span></a></li><li><a href="https://search.yahoo.co.jp/image" class="y9H1Sj9hz4OlEq2_aEt5E" aria-label="画像で検索" tabindex="-1" data-cl-params="_cl_vmodule:search;_cl_link:img;_cl_position:0"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR"><span class="_1uQvvM7M_K0hc4e29lRa8">画像</span></span></a></li><li><a href="https://search.yahoo.co.jp/video" class="y9H1Sj9hz4OlEq2_aEt5E" aria-label="動画で検索" tabindex="-1" data-cl-params="_cl_vmodule:search;_cl_link:vd;_cl_position:0"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR"><span class="_1uQvvM7M_K0hc4e29lRa8">動画</span></span></a></li><li><a href="https://chiebukuro.yahoo.co.jp/" class="y9H1Sj9hz4OlEq2_aEt5E" aria-label="知恵袋で検索" tabindex="-1" data-cl-params="_cl_vmodule:search;_cl_link:chie;_cl_position:0"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR"><span class="_1uQvvM7M_K0hc4e29lRa8">知恵袋</span></span></a></li><li><a href="https://map.yahoo.co.jp/" class="y9H1Sj9hz4OlEq2_aEt5E" aria-label="地図で検索" tabindex="-1" data-cl-params="_cl_vmodule:search;_cl_link:map;_cl_position:0"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR"><span class="_1uQvvM7M_K0hc4e29lRa8">地図</span></span></a></li><li><a href="https://search.yahoo.co.jp/realtime" class="y9H1Sj9hz4OlEq2_aEt5E" aria-label="リアルタイムで検索" tabindex="-1" data-cl-params="_cl_vmodule:search;_cl_link:realtime;_cl_position:0"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR"><span class="_1uQvvM7M_K0hc4e29lRa8">リアルタイム</span></span></a></li><li><a href="https://services.yahoo.co.jp/" class="y9H1Sj9hz4OlEq2_aEt5E" aria-label="一覧で検索" tabindex="-1" data-cl-params="_cl_vmodule:search;_cl_link:svc;_cl_position:0"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR"><span class="_1uQvvM7M_K0hc4e29lRa8">一覧</span></span></a></li></ul><form action="https://search.yahoo.co.jp/search" name="sf1" method="get" role="search"><fieldset><legend>Yahoo!検索</legend><span class="DqAzAIGI9nNwKOFNu3ohH"><input type="search" class="n1Bw-ocbo_PYJUKDrSyHN" name="p" autoComplete="on" aria-label="検索したいキーワードを入力してください" aria-live="assertive"/><button class="_3doZ1jaGSB3ytjCOeYg5nG" type="submit" data-cl-params="_cl_vmodule:search;_cl_link:web;_cl_position:0"><span class="_4L_am9wbgiSNBUD50wbDA"><span class="_3oyNASbPKmiq-iwh602OKt">検索</span></span></button></span></fieldset><input type="hidden" name="fr" value="top_table"/><input type="hidden" name="ei" value="UTF-8"/><input type="hidden" name="ts"/><input type="hidden" name="aq" value=""/></form></div></section><div id="Message" class="ult__mods"><noscript><section class="_1bzp-M2uxs86VaYq0IxNuy"><h1 class="_2lQjNEXfrs2C14psQwQ5ai _3v9VCsGKsktTB7eaN70w-n">JavaScriptの設定について</h1><div class="_19J_Z9KVKnQzOVKA0jkC4e"><p><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">JavaScriptが無効になっています。すべての機能を利用するためには、有効に設定してください。<br/>詳しくは「<a class="_1NzGMsC3awTFzjzXnvX-zV" data-cl-params="_cl_vmodule:message;_cl_link:jsof;_cl_position:0" href="https://support.yahoo-net.jp/noscript">JavaScriptの設定方法</a>」をご覧ください。</span></p></div></section></noscript><section class="_1bzp-M2uxs86VaYq0IxNuy"><h1 class="_2lQjNEXfrs2C14psQwQ5ai _3v9VCsGKsktTB7eaN70w-n">推奨ブラウザーについて</h1><div class="_19J_Z9KVKnQzOVKA0jkC4e"><p><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">Yahoo! JAPANトップページの機能を正しくご利用いただくには、下記の環境が必要です。<span class="_1XWJVEK6heb_Paj9eU6R1u">パソコンでご利用のお客様<br/>Windows：Edge 最新版 / Chrome 最新版 / Firefox 最新版　macOS：Safari 15.0以上</span><span class="_1XWJVEK6heb_Paj9eU6R1u">タブレットでご利用のお客様<br/>iOS 15.0以降、または、Android5.0以降のOSに標準搭載されたブラウザー<br/>※日本国内版として発売されている端末でご利用ください。</span></span></p></div></section></div><section id="TopLink" class="_2Pb7ROIJrC3Wj9bPxN4J7D ult__mods"><h1 class="T29vXGZu-fmHRJfd123YZ _3v9VCsGKsktTB7eaN70w-n">お知らせ</h1><ul class="QoCp7KDEt29FbN5hCjsCx" aria-label="お知らせ"><li class="_2ZzfUQqYuRip1h-aXoiCHV"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://search.yahoo.co.jp/realtime/search/matome/theme/02c61b1f8d8ae96d0586?rkf=1&amp;rts_pct" data-cl-params="_cl_vmodule:toplink;_cl_link:link;_cl_position:1;aid:5701437"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR"><span class="_3S2Wdrkt1LKANaWcLrZToT">「サッカーW杯」に関するバズまとめをチェック</span></span></a></li><li class="_2ZzfUQqYuRip1h-aXoiCHV"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://auctions.yahoo.co.jp/topic/promo/select/nike-sneakers/" data-cl-params="_cl_vmodule:toplink;_cl_link:link;_cl_position:2;aid:5701449"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR"><span class="_3S2Wdrkt1LKANaWcLrZToT">NIKEスニーカー 人気モデルも</span></span></a></li></ul></section></header><main class="_1E44HBKDmnr5AqaU83dU3b"><div class="T0vodIJQXVKLbGKVRIOPQ"><nav><div class="_1nJ39BFpWaPCIWutB-olO8 _171Q0OxQF2Vk3J_CxMxajb -DmdTfmK9dpsdI1vggc-z"><header class="_37AoRe1Io5JOtSIPDdUQCF _1m5d7MNAIFyOM71xJdSK_s _3v9VCsGKsktTB7eaN70w-n"><h1 class="_2LJWWRbnY7KqEPyWQukxFD _2vlyNSs41eUR8HDyQ8iUvQ">主なサービス</h1></header><div id="ToolList"><ul class="_1glrFPJpWbefWf8qr3k4FU" aria-label="主なサービス"><li><div class="_3Ip8DQAJYKfPeByyVN-utZ"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://shopping.yahoo.co.jp/?sc_e=ytc" aria-label="ショッピングへ遷移する"><p class="_2bBRLhI5ZpVYu0tuHZEFrn"><span class="pz0On1w4yAviBGMdKItoQ"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">ショッピング</span></span><span class="_1Al3K70np2V_Ev1eGkfsBm"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij MOLSPrtOUmdnYy_LgNt2f" style="width:20px;height:20px"></span></span></p></a></div></li><li><div class="_3Ip8DQAJYKfPeByyVN-utZ"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://auctions.yahoo.co.jp" aria-label="オークションへ遷移する"><p class="_2bBRLhI5ZpVYu0tuHZEFrn"><span class="pz0On1w4yAviBGMdKItoQ"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">オークション</span></span><span class="_1Al3K70np2V_Ev1eGkfsBm"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _1K47f2oTmrnpusFOpVVqfY" style="width:20px;height:20px"></span></span></p></a></div></li><li><div class="_3Ip8DQAJYKfPeByyVN-utZ"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://app.adjust.com/1kmi1m2?redirect=https%3A%2F%2Fpaypayfleamarket.yahoo.co.jp%2F%3Fcpt_s%3Dytopmedia%26cpt_m%3Dkotei%26cpt_n%3Dcontent%26cpt_c%3Dytopmedia" aria-label="フリマへ遷移する"><p class="_2bBRLhI5ZpVYu0tuHZEFrn"><span class="pz0On1w4yAviBGMdKItoQ"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">フリマ</span></span><span class="_1Al3K70np2V_Ev1eGkfsBm"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _1LRBe41RBepLBxFbOUXYRk" style="width:20px;height:20px"></span></span></p></a></div></li><li><div class="_3Ip8DQAJYKfPeByyVN-utZ"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://zozo.jp/?utm_source=yahoo&amp;utm_medium=referral&amp;utm_campaign=web_ytop-leftcolumn" aria-label="ZOZOTOWNへ遷移する"><p class="_2bBRLhI5ZpVYu0tuHZEFrn"><span class="pz0On1w4yAviBGMdKItoQ"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">ZOZOTOWN</span></span><span class="_1Al3K70np2V_Ev1eGkfsBm"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _2VdNwkD_q8hjK0ZyvATgab" style="width:20px;height:20px"></span></span></p></a></div></li><li><div class="_3Ip8DQAJYKfPeByyVN-utZ"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://lohaco.yahoo.co.jp/?bk=t&amp;sc_e=j_as_ya_tc_n&amp;iscr=1" aria-label="LOHACOへ遷移する"><p class="_2bBRLhI5ZpVYu0tuHZEFrn"><span class="pz0On1w4yAviBGMdKItoQ"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">LOHACO</span></span><span class="_1Al3K70np2V_Ev1eGkfsBm"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _3xvmznkMqRitO0Iqn3ckur" style="width:20px;height:20px"></span></span></p></a></div></li><li><div class="_3Ip8DQAJYKfPeByyVN-utZ"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://travel.yahoo.co.jp/ikCo.ashx?cosid=y_010002&amp;cosuid=ytsl&amp;surl=%2F&amp;sc_e=ytsl" aria-label="トラベルへ遷移する"><p class="_2bBRLhI5ZpVYu0tuHZEFrn"><span class="pz0On1w4yAviBGMdKItoQ"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">トラベル</span></span><span class="_1Al3K70np2V_Ev1eGkfsBm"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _1yEKxUFSw-Xv2gaBZsYRuI" style="width:20px;height:20px"></span></span></p></a></div></li><li><div class="_3Ip8DQAJYKfPeByyVN-utZ"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://www.ikyu.com/ikCo.ashx?cosid=ik010002&amp;surl=%2F&amp;sc_e=ytc_pc_ikyu" aria-label="一休.comへ遷移する"><p class="_2bBRLhI5ZpVYu0tuHZEFrn"><span class="pz0On1w4yAviBGMdKItoQ"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">一休.com</span></span><span class="_1Al3K70np2V_Ev1eGkfsBm"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij daLkyi7PiGXeFyVYTU_9n" style="width:20px;height:20px"></span></span></p></a></div></li><li><div class="_3Ip8DQAJYKfPeByyVN-utZ"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://restaurant.ikyu.com/rsCosite.asp?CosNo=10000175&amp;CosUrl=" aria-label="一休.comレストランへ遷移する"><p class="_2bBRLhI5ZpVYu0tuHZEFrn"><span class="pz0On1w4yAviBGMdKItoQ"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">一休.comレストラン</span></span><span class="_1Al3K70np2V_Ev1eGkfsBm"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _1z4Le4zkghapVZCQm9RCy8" style="width:20px;height:20px"></span></span></p></a></div></li><li><div class="_3Ip8DQAJYKfPeByyVN-utZ"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://furusato.yahoo.co.jp/?sc_e=yt_cfrst_pc_cont" aria-label="ふるさと納税へ遷移する"><p class="_2bBRLhI5ZpVYu0tuHZEFrn"><span class="pz0On1w4yAviBGMdKItoQ"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">ふるさと納税</span></span><span class="_1Al3K70np2V_Ev1eGkfsBm"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _133vtNHV6sMSD0gEfcSi6G" style="width:20px;height:20px"></span></span></p></a></div></li><li><div class="_3Ip8DQAJYKfPeByyVN-utZ"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt cl-nofollow" href="https://demae-can.com/?utm_source=yahoo&amp;utm_medium=toplink&amp;utm_campaign=demaecantop" aria-label="出前館へ遷移する"><p class="_2bBRLhI5ZpVYu0tuHZEFrn"><span class="pz0On1w4yAviBGMdKItoQ"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">出前館</span></span><span class="_1Al3K70np2V_Ev1eGkfsBm"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij NuRliOifOckuQ9kobVaI9" style="width:20px;height:20px"></span></span></p></a></div></li></ul></div><footer id="ToolFooter" class="_3wZKJtfV8AYYaTP-zoyO9O ult__mods"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://services.yahoo.co.jp/" data-cl-params="_cl_vmodule:tool;_cl_link:list;_cl_position:0" aria-label="Yahoo! JAPANのサービス一覧"><dl class="STepvEgbaZ0rLEqfER-qm"><dt class="W2bretj6vyf8QDes2gkQA"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">サービス一覧</span></dt><dd class="_37zK--zuySKLzNE12rgdHL"><span class="_2Uq6Pw5lfFfxr_OD36xHp6 _1dr5aVDbNPF63JCS2bJhij _3WrFs0ChLr_s9-gBqS7yts" style="width:12px;height:12px"></span></dd></dl></a></footer></div></nav></div><div class="_18kxl0qTaDA-GTdvTQKmFY"><div class="_2DunygeBZHdgHX_Gih3GC4" id="Topics"><article><div class="_1nJ39BFpWaPCIWutB-olO8 -DmdTfmK9dpsdI1vggc-z"><header class="_3WRl3h4EAx9fdzwK76sfHC"><h1 class="_2LJWWRbnY7KqEPyWQukxFD _9YxVmCAhrwLz2V6qXWqBJ" aria-label="Yahoo!ニュース">ニュース</h1></header><section id="tabpanelTopics1" class="ult__mods" role="tabpanel" aria-labelledby="tabTopics1" aria-hidden="false"><header class="_5swsXRdQMtHOvhS2bwHid _3v9VCsGKsktTB7eaN70w-n"><h1>主要 ニュース</h1></header><div class="_1XAfHUWtx6tfYZuWDVjNxZ"><div class="_2jjSS8r_I9Zd6O9NFJtDN-" aria-label="主要 ニュース"><p class="_2vq5UBfOFpYcyqNRy51gDf"><span class="fQMqQTGJTbIMxjQwZA2zk _2VDw54wcDejORZkozpOysW">7/9(木) 23:14更新</span></p><ul><li class="_2j0udhv5jERZtYzddeDwcv"><article class="QLtbNZwO-lssuRUcWewbd" data-ual-view-type="list" data-ual="id_type:shannon_article;content_id:19e3d38d449d25a50a6e036b12b80a6f33e7b16c;element_id:first-main-topics-text"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/pickup/6587352" data-cl-params="_cl_vmodule:tpto;_cl_link:title;_cl_position:1;tpid:6587352;shcid:19e3d38d449d25a50a6e036b12b80a6f33e7b16c;imgsize:s;cmt_num:443;dir_flg:0" data-ual-gotocontent="true"><div class="_2cXD1uC4eaOih4-zkRgqjU"><div class="TRuzXRRZHRqbqgLUCCco9"><h1 class="_3cl937Zpn1ce8mDKd5kp7u"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4">プーチン氏 戦闘継続の意志強める</span></h1><span class="_2obRU_TgAxzHaYqOXrZYlv"><span class="h4yLXygiSc5wwNlJOQEdz _1dr5aVDbNPF63JCS2bJhij _2M3AyDfFaeJl3Uo7lUPMAp" style="width:30px;height:12px">NEW</span></span></div></div></a></article></li><li class="_2j0udhv5jERZtYzddeDwcv"><article class="QLtbNZwO-lssuRUcWewbd" data-ual-view-type="list" data-ual="id_type:shannon_article;content_id:e2e2b4c128200f95c6a6fe98c1acdfa35bdab2ef;element_id:first-main-topics-text"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/pickup/6587353" data-cl-params="_cl_vmodule:tpto;_cl_link:title;_cl_position:2;tpid:6587353;shcid:e2e2b4c128200f95c6a6fe98c1acdfa35bdab2ef;imgsize:s;cmt_num:71;dir_flg:0" data-ual-gotocontent="true"><div class="_2cXD1uC4eaOih4-zkRgqjU"><div class="TRuzXRRZHRqbqgLUCCco9"><h1 class="_3cl937Zpn1ce8mDKd5kp7u"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4">安全保障巡り行政傍受 自民提言へ</span></h1><span class="_2obRU_TgAxzHaYqOXrZYlv"><span class="h4yLXygiSc5wwNlJOQEdz _1dr5aVDbNPF63JCS2bJhij _2M3AyDfFaeJl3Uo7lUPMAp" style="width:30px;height:12px">NEW</span></span></div></div></a></article></li><li class="_2j0udhv5jERZtYzddeDwcv"><article class="QLtbNZwO-lssuRUcWewbd" data-ual-view-type="list" data-ual="id_type:shannon_article;content_id:c8554078daf0683d17f4a3bc865b00f05302fc6f;element_id:first-main-topics-text"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/pickup/6587340" data-cl-params="_cl_vmodule:tpto;_cl_link:title;_cl_position:3;tpid:6587340;shcid:c8554078daf0683d17f4a3bc865b00f05302fc6f;imgsize:s;cmt_num:5152;dir_flg:0" data-ual-gotocontent="true"><div class="_2cXD1uC4eaOih4-zkRgqjU"><div class="TRuzXRRZHRqbqgLUCCco9"><h1 class="_3cl937Zpn1ce8mDKd5kp7u"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4">山本太郎氏 政界引退を表明</span></h1></div></div></a></article></li><li class="_2j0udhv5jERZtYzddeDwcv"><article class="QLtbNZwO-lssuRUcWewbd" data-ual-view-type="list" data-ual="id_type:shannon_article;content_id:5de525e663a7b45d62173601f50993a63d7fc2e1;element_id:first-main-topics-text"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/pickup/6587354" data-cl-params="_cl_vmodule:tpto;_cl_link:title;_cl_position:4;tpid:6587354;shcid:5de525e663a7b45d62173601f50993a63d7fc2e1;imgsize:s;cmt_num:380;dir_flg:0" data-ual-gotocontent="true"><div class="_2cXD1uC4eaOih4-zkRgqjU"><div class="TRuzXRRZHRqbqgLUCCco9"><h1 class="_3cl937Zpn1ce8mDKd5kp7u"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4">杉並区長 23日間の長期休暇取得へ</span></h1><span class="_2obRU_TgAxzHaYqOXrZYlv"><span class="h4yLXygiSc5wwNlJOQEdz _1dr5aVDbNPF63JCS2bJhij _2M3AyDfFaeJl3Uo7lUPMAp" style="width:30px;height:12px">NEW</span></span></div></div></a></article></li><li class="_2j0udhv5jERZtYzddeDwcv"><article class="QLtbNZwO-lssuRUcWewbd" data-ual-view-type="list" data-ual="id_type:shannon_article;content_id:dd2ace85049f94c2fbadf0b34d2717093ec07979;element_id:first-main-topics-text"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/pickup/6587347" data-cl-params="_cl_vmodule:tpto;_cl_link:title;_cl_position:5;tpid:6587347;shcid:dd2ace85049f94c2fbadf0b34d2717093ec07979;imgsize:s;cmt_num:78;dir_flg:0" data-ual-gotocontent="true"><div class="_2cXD1uC4eaOih4-zkRgqjU"><div class="TRuzXRRZHRqbqgLUCCco9"><h1 class="_3cl937Zpn1ce8mDKd5kp7u"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4">ファミマが初の旗艦店 試着室も</span></h1><span class="_2obRU_TgAxzHaYqOXrZYlv"><span class="h4yLXygiSc5wwNlJOQEdz _1dr5aVDbNPF63JCS2bJhij _2M3AyDfFaeJl3Uo7lUPMAp" style="width:30px;height:12px">NEW</span></span></div></div></a></article></li><li class="_2j0udhv5jERZtYzddeDwcv"><article class="QLtbNZwO-lssuRUcWewbd" data-ual-view-type="list" data-ual="id_type:shannon_article;content_id:426f679f8af004736291a3cbb4d71de5110a6806;element_id:first-main-topics-text"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/pickup/6587346" data-cl-params="_cl_vmodule:tpto;_cl_link:title;_cl_position:6;tpid:6587346;shcid:426f679f8af004736291a3cbb4d71de5110a6806;imgsize:s;cmt_num:358;dir_flg:0" data-ual-gotocontent="true"><div class="_2cXD1uC4eaOih4-zkRgqjU"><div class="TRuzXRRZHRqbqgLUCCco9"><h1 class="_3cl937Zpn1ce8mDKd5kp7u"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4">ジャンプ付録巡る混乱 書店が警戒</span></h1></div></div></a></article></li><li class="_2j0udhv5jERZtYzddeDwcv"><article class="QLtbNZwO-lssuRUcWewbd" data-ual-view-type="list" data-ual="id_type:shannon_article;content_id:1687e6524a63fb7d5fe499d53f93ed7991711c93;element_id:first-main-topics-text"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/pickup/6587328" data-cl-params="_cl_vmodule:tpto;_cl_link:title;_cl_position:7;tpid:6587328;shcid:1687e6524a63fb7d5fe499d53f93ed7991711c93;imgsize:s;cmt_num:1206;dir_flg:0" data-ual-gotocontent="true"><div class="_2cXD1uC4eaOih4-zkRgqjU"><div class="TRuzXRRZHRqbqgLUCCco9"><h1 class="_3cl937Zpn1ce8mDKd5kp7u"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4">全員がアルゼンチンの審判 批判</span></h1></div></div></a></article></li><li class="_2j0udhv5jERZtYzddeDwcv"><article class="QLtbNZwO-lssuRUcWewbd" data-ual-view-type="list" data-ual="id_type:shannon_article;content_id:e1f4e186d52ec4eeb50ad6fe39883382a9d746ca;element_id:first-main-topics-text"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/pickup/6587343" data-cl-params="_cl_vmodule:tpto;_cl_link:title;_cl_position:8;tpid:6587343;shcid:e1f4e186d52ec4eeb50ad6fe39883382a9d746ca;imgsize:s;cmt_num:281;dir_flg:0" data-ual-gotocontent="true"><div class="_2cXD1uC4eaOih4-zkRgqjU"><div class="TRuzXRRZHRqbqgLUCCco9"><h1 class="_3cl937Zpn1ce8mDKd5kp7u"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4">「ヒーロー」など名曲 英歌手死去</span></h1></div></div></a></article></li></ul></div><div class="_3sm0x0pVyxLkf4q9ubmXSL"><article><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/articles/addd0c9f9696872352ef63e08b08cf4b5a6e3c96/images/000" data-cl-params="_cl_vmodule:tpto;_cl_link:title;_cl_position:9;imgsize:l;shcid:addd0c9f9696872352ef63e08b08cf4b5a6e3c96;dir_flg:0"><div class="_1EYwdR4JxrwgpIvWk7vO3f"><h1 class="RS4h_eDWC6FIIyYMupWR0"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4">夏が来た</span></h1><p class="_2e8OreFgYIc3gdzYJLKAMA"><time class="_1GD9Sx7FpCs4EuL3bT974r">7/9(木) 11:36</time></p><div class="_1pfcRKnf6y-2AXzpXf0vrb"><cite class="O9jggTRv0zy3XcPayfJLa">産経新聞</cite></div><div class="_1UmUawjY6VSzmTK3Y-1sjq"><span class="rStpk9W4eUO5IMVhnJylj"><picture><source type="image/webp" srcSet="https://news-pctr.c.yimg.jp/t/news-topics/images/tpc/2026/7/9/e6eb3f42ee391936411635003b355e356b93e76abef9a2fe8e303fa59becc73a.jpg?h=200&amp;w=200&amp;pri=l&amp;fmt=webp"/><img src="https://news-pctr.c.yimg.jp/t/news-topics/images/tpc/2026/7/9/e6eb3f42ee391936411635003b355e356b93e76abef9a2fe8e303fa59becc73a.jpg?h=200&amp;w=200&amp;pri=l" width="90" height="68.025" alt=""/></picture></span></div></div></a></article></div><footer class="_14QMUEF7FBJllh14_fachi"><ul class="g0enqV_RXcWSi7gOheAhU"><li class="_3gXYBXvKzn55TlnxGoxJ5j"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/topics/top-picks" data-cl-params="_cl_vmodule:tpto;_cl_link:more;_cl_position:0">もっと見る</a></span></li><li class="_3gXYBXvKzn55TlnxGoxJ5j"><span class="fQMqQTGJTbIMxjQwZA2zk _1alzSpTqJzvSVUWqpx82d4"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://news.yahoo.co.jp/topics" data-cl-params="_cl_vmodule:tpto;_cl_link:list;_cl_position:0">トピックス一覧</a></span></li></ul></footer></div><div></div></section></div></article></div></div><div class="_18Y5F9M1FtUYbDxoMln3x7"><footer id="footer" role="contentinfo" class="_2GpKo0TlJwonmUj2nqQxuE ult__mods"><ul><li class="_2dqDKArI6iGaA3nS7xNUmE"><dl><dt class="_2X2lsrA-jZqBKb6bsA9Vnr"><span class="fQMqQTGJTbIMxjQwZA2zk _3tGRl6x9iIWRiFTkKl3kcR">LINEヤフー株式会社</span></dt><dd><ul class="_3I3C2VL0OPEm7Iyt-OCFz0"><li class="_3b1WmJCwznSYqqf7ptd54g"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://www.lycorp.co.jp/ja/" data-cl-params="_cl_link:comp;_cl_position:0">会社概要</a></li><li class="_3b1WmJCwznSYqqf7ptd54g"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://www.lycorp.co.jp/ja/sustainability/" data-cl-params="_cl_link:sus;_cl_position:0">サステナビリティ</a></li><li class="_3b1WmJCwznSYqqf7ptd54g"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://www.lycbiz.com/jp/?utm_source=yahoo&amp;utm_medium=referral&amp;utm_campaign=ysa_cv_link_footer-pc_241001" data-cl-params="_cl_link:ad;_cl_position:0">広告掲載について</a></li><li class="_3b1WmJCwznSYqqf7ptd54g"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://www.lycorp.co.jp/ja/recruit/" data-cl-params="_cl_link:hr;_cl_position:0">採用情報</a></li></ul><ul class="_3I3C2VL0OPEm7Iyt-OCFz0"><li class="_3b1WmJCwznSYqqf7ptd54g"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://www.lycorp.co.jp/ja/company/terms/" data-cl-params="_cl_link:agreement;_cl_position:0">利用規約</a></li><li class="_3b1WmJCwznSYqqf7ptd54g"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://www.lycorp.co.jp/ja/company/disclaimer/" data-cl-params="_cl_link:disc;_cl_position:0">免責事項</a></li><li class="_3b1WmJCwznSYqqf7ptd54g"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://www.lycorp.co.jp/ja/company/mediastatement/" data-cl-params="_cl_link:state;_cl_position:0">メディアステートメント</a></li></ul><ul class="_3I3C2VL0OPEm7Iyt-OCFz0"><li class="_3b1WmJCwznSYqqf7ptd54g"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://www.lycorp.co.jp/ja/company/privacypolicy/" data-cl-params="_cl_link:policy;_cl_position:0">プライバシーポリシー</a></li><li class="_3b1WmJCwznSYqqf7ptd54g"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://privacy.lycorp.co.jp/ja/" data-cl-params="_cl_link:center;_cl_position:0">プライバシーセンター</a></li><li class="_3b1WmJCwznSYqqf7ptd54g"><a class="yMWCYupQNdgppL-NV6sMi _3sAlKGsIBCxTUbNi86oSjt" href="https://www.lycorp.co.jp/ja/ir.html" data-cl-params="_cl_link:ir;_cl_position:0">投資家情報</a></li></ul></dd></dl></li></ul><p class="_3rCO0-ffBAEkCS8URNYQBC"><small class="_1wf30cBtHv6aK8mAYdYbuo">© LY Corporation</small></p></footer></div></main></div></div><script src="https://s.yimg.jp/images/ds/cl/ds-custom-logger-1.1.0.min.js"></script><script>(function(){
-  var osmode = "unknown";
-  if (typeof window.matchMedia !== "undefined") {
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      osmode = "dark";
-    } else if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-      osmode = "light";
-    }
-  }
-  var cl = new DSCustomLogger.CustomLogger();
-  window.__logger = cl.targetClass("ult__mods")
-    .targetViewableClass("vult__mods")
-    .startViewable()
-    .setPageData({"service":"toppage","pagetype":"top","status":"logout","device":"pc","os":"other","apptype":"web","opttype":"pc","mtestid":"","ybb":"0","premium":"0","paypay":"0","jis":"noset","grade":"c"})
-    .setPageData({ osmode: osmode })
-    .initCustomLoggerCore();
-})();</script><script src="https://s.yimg.jp/images/ds/yas/ual-2.10.2.min.js"></script><script>(function(){
-  window.ualcmds = window.ualcmds || [];
-  window.ual = window.ual || function() {
-    ualcmds.push(arguments);
-  };
+            });
 
-  ual('config', 'token', '4465a92c-f0fd-406f-b519-efd409cc9849');
+            // Trigger specific tab loading lifecycles
+            if (tabId === 'questions') {
+                initQuestionScreen();
+            } else if (tabId === 'grading') {
+                initGradingWorkspace();
+            } else if (tabId === 'exports') {
+                initExportsDashboard();
+            }
+        }
 
-  ual('global', {
-    service: "toppage",
-    apptype: "web",
-    mtestid: "",
-    opttype: "pc"
-  });
-  ual('offset', {
-    auto: true
-  });
-  ual('ctrl', 'start');
-})();</script></body></html>
+        // File Loading Utilities (Students Upload Screen)
+        async function handleStudentFiles(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            showToast("読込中...", `${files.length}件のPDFを解析しています。`);
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+
+                const studentPromise = new Promise((resolve) => {
+                    reader.onload = async (e) => {
+                        const fileData = e.target.result;
+                        const studentId = 'student_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+                        const cleanName = file.name.replace(/\.[^/.]+$/, ""); // strip extension
+
+                        try {
+                            const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(fileData.slice(0)) });
+                            const pdf = await loadingTask.promise;
+                            
+                            AppState.students.push({
+                                id: studentId,
+                                name: cleanName,
+                                fileName: file.name,
+                                fileData: fileData, // Store raw PDF binary
+                                pageCount: pdf.numPages
+                            });
+
+                            // Initialize empty grade structure for this student
+                            AppState.grades[studentId] = {};
+                        } catch (err) {
+                            console.error("Error reading PDF:", err);
+                        }
+                        resolve();
+                    };
+                });
+
+                reader.readAsArrayBuffer(file);
+                await studentPromise;
+            }
+
+            updateStudentListTable();
+            updateSidebarCounts();
+            showToast("完了", "すべての答案PDFを読み込みました！");
+        }
+
+        function updateStudentListTable() {
+            const tbody = document.getElementById('student-list-tbody');
+            tbody.innerHTML = '';
+
+            if (AppState.students.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="no-students-placeholder">
+                        <td colspan="4" class="py-8 text-center text-slate-400">
+                            学生が登録されていません。上のエリアから答案PDFを追加してください。
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            AppState.students.forEach((student, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-all";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono font-bold text-slate-400">${index + 1}</td>
+                    <td class="py-3 px-4">
+                        <input type="text" value="${student.name}" onchange="updateStudentName('${student.id}', this.value)" class="bg-transparent hover:bg-white focus:bg-white focus:ring-1 focus:ring-rose-500 border border-transparent hover:border-slate-200 focus:border-rose-500 px-2 py-1 rounded font-bold text-slate-700 w-full transition-all">
+                    </td>
+                    <td class="py-3 px-4 font-mono text-xs text-slate-500">${student.fileName} (${student.pageCount || 1} ページ)</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="removeStudent('${student.id}')" class="text-xs font-bold text-red-500 hover:text-red-700 hover:underline">
+                            除外
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateStudentName(id, newName) {
+            const student = AppState.students.find(s => s.id === id);
+            if (student) student.name = newName;
+            updateSidebarCounts();
+        }
+
+        function removeStudent(id) {
+            AppState.students = AppState.students.filter(s => s.id !== id);
+            delete AppState.grades[id];
+            updateStudentListTable();
+            updateSidebarCounts();
+        }
+
+        function clearStudents() {
+            AppState.students = [];
+            AppState.grades = {};
+            updateStudentListTable();
+            updateSidebarCounts();
+        }
+
+        function updateSidebarCounts() {
+            document.getElementById('sidebar-student-count').textContent = `${AppState.students.length} 名`;
+            document.getElementById('sidebar-question-count').textContent = `${AppState.questions.length} 問`;
+        }
+
+        // QUESTION SELECTION VIEWPORT CONTROLLER
+        function initQuestionScreen() {
+            const dropdown = document.getElementById('template-student-selector');
+            dropdown.innerHTML = '';
+            
+            if (AppState.students.length === 0) {
+                showToast("警告", "設問領域を定めるための答案PDFを、まず読込画面から最低1つアップロードしてください。", "error");
+                switchTab('students');
+                return;
+            }
+
+            AppState.students.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                dropdown.appendChild(opt);
+            });
+
+            if (!AppState.templateStudentId || !AppState.students.some(s => s.id === AppState.templateStudentId)) {
+                AppState.templateStudentId = AppState.students[0].id;
+                AppState.templatePageIndex = 0;
+            }
+
+            renderTemplatePDF();
+            renderQuestionsConfigList();
+        }
+
+        function changeTemplateStudent() {
+            AppState.templateStudentId = document.getElementById('template-student-selector').value;
+            AppState.templatePageIndex = 0;
+            renderTemplatePDF();
+        }
+
+        async function renderTemplatePDF() {
+            const student = AppState.students.find(s => s.id === AppState.templateStudentId);
+            if (!student || !student.fileData) return;
+
+            AppState.templatePageCount = student.pageCount || 1;
+            document.getElementById('template-page-indicator').textContent = `ページ ${AppState.templatePageIndex + 1} / ${student.pageCount}`;
+
+            try {
+                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(AppState.templatePageIndex + 1);
+
+                const canvas = document.getElementById('pdf-template-canvas');
+                const context = canvas.getContext('2d');
+
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+
+                await page.render(renderContext).promise;
+
+                const overlay = document.getElementById('pdf-template-overlay');
+                overlay.width = viewport.width;
+                overlay.height = viewport.height;
+
+                setupDragSelection(overlay);
+                drawExistingQuestionBoxesOnOverlay();
+            } catch (err) {
+                console.error("Template render failed:", err);
+            }
+        }
+
+        function prevTemplatePage() {
+            if (AppState.templatePageIndex > 0) {
+                AppState.templatePageIndex--;
+                renderTemplatePDF();
+            }
+        }
+
+        function nextTemplatePage() {
+            if (AppState.templatePageIndex < AppState.templatePageCount - 1) {
+                AppState.templatePageIndex++;
+                renderTemplatePDF();
+            }
+        }
+
+        // INTERACTIVE DRAW BOX SELECTION IN CANVAS
+        function setupDragSelection(overlay) {
+            overlay.onmousedown = (e) => {
+                const rect = overlay.getBoundingClientRect();
+                AppState.isSelecting = true;
+                AppState.selectionStart = {
+                    x: (e.clientX - rect.left) * (overlay.width / rect.width),
+                    y: (e.clientY - rect.top) * (overlay.height / rect.height)
+                };
+                AppState.selectionEnd = null;
+            };
+
+            overlay.onmousemove = (e) => {
+                if (!AppState.isSelecting) return;
+                const rect = overlay.getBoundingClientRect();
+                AppState.selectionEnd = {
+                    x: (e.clientX - rect.left) * (overlay.width / rect.width),
+                    y: (e.clientY - rect.top) * (overlay.height / rect.height)
+                };
+                drawDragOverlay();
+            };
+
+            overlay.onmouseup = () => {
+                if (!AppState.isSelecting) return;
+                AppState.isSelecting = false;
+                
+                if (AppState.selectionStart && AppState.selectionEnd) {
+                    const x = Math.min(AppState.selectionStart.x, AppState.selectionEnd.x);
+                    const y = Math.min(AppState.selectionStart.y, AppState.selectionEnd.y);
+                    const w = Math.abs(AppState.selectionStart.x - AppState.selectionEnd.x);
+                    const h = Math.abs(AppState.selectionStart.y - AppState.selectionEnd.y);
+
+                    if (w > 10 && h > 10) {
+                        AppState.selectionBox = { x, y, w, h };
+                        document.getElementById('selected-coords-indicator').textContent = 
+                            `X: ${Math.round(x)}, Y: ${Math.round(y)} (${Math.round(w)}x${Math.round(h)})`;
+                    }
+                }
+            };
+        }
+
+        function drawDragOverlay() {
+            const overlay = document.getElementById('pdf-template-overlay');
+            const ctx = overlay.getContext('2d');
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+            drawExistingQuestionBoxesOnOverlay();
+
+            if (AppState.isSelecting && AppState.selectionStart && AppState.selectionEnd) {
+                ctx.strokeStyle = '#f43f5e';
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([6, 4]);
+                ctx.fillStyle = 'rgba(244, 63, 94, 0.1)';
+                
+                const x = Math.min(AppState.selectionStart.x, AppState.selectionEnd.x);
+                const y = Math.min(AppState.selectionStart.y, AppState.selectionEnd.y);
+                const w = Math.abs(AppState.selectionStart.x - AppState.selectionEnd.x);
+                const h = Math.abs(AppState.selectionStart.y - AppState.selectionEnd.y);
+
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeRect(x, y, w, h);
+                ctx.setLineDash([]);
+            }
+        }
+
+        function drawExistingQuestionBoxesOnOverlay() {
+            const overlay = document.getElementById('pdf-template-overlay');
+            const ctx = overlay.getContext('2d');
+
+            AppState.questions.forEach(q => {
+                if (q.pageIndex !== AppState.templatePageIndex) return;
+                
+                ctx.strokeStyle = '#4f46e5';
+                ctx.lineWidth = 2;
+                ctx.fillStyle = 'rgba(79, 70, 229, 0.05)';
+                ctx.fillRect(q.rect.x, q.rect.y, q.rect.w, q.rect.h);
+                ctx.strokeRect(q.rect.x, q.rect.y, q.rect.w, q.rect.h);
+
+                ctx.fillStyle = '#4f46e5';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.fillText(`${q.parentGroup ? q.parentGroup + ' - ' : ''}${q.name} (${q.maxScore}点)`, q.rect.x + 5, q.rect.y + 16);
+            });
+        }
+
+        // ADD QUESTION CONTROLLER
+        function addQuestion() {
+            const name = document.getElementById('q-name').value.trim();
+            const parentGroup = document.getElementById('q-parent-group').value.trim();
+            const maxScoreInput = document.getElementById('q-max-score').value;
+            const maxScore = parseFloat(maxScoreInput);
+
+            if (!name) {
+                showToast("エラー", "設問の題名を入力してください。", "error");
+                return;
+            }
+            if (isNaN(maxScore) || maxScore <= 0) {
+                showToast("エラー", "正しい満点・配点スコアを設定してください。", "error");
+                return;
+            }
+            if (!AppState.selectionBox) {
+                showToast("エラー", "右の用紙上でドラッグして、設問の解答欄領域を指定してください。", "error");
+                return;
+            }
+
+            const qId = 'q_' + Date.now() + '_' + Math.floor(Math.random() * 100);
+            
+            AppState.questions.push({
+                id: qId,
+                name: name,
+                parentGroup: parentGroup || null,
+                maxScore: maxScore,
+                rect: { ...AppState.selectionBox },
+                pageIndex: AppState.templatePageIndex
+            });
+
+            AppState.students.forEach(s => {
+                if (!AppState.grades[s.id]) AppState.grades[s.id] = {};
+                if (!AppState.grades[s.id][qId]) {
+                    AppState.grades[s.id][qId] = {
+                        score: null,
+                        stampPos: {
+                            gradeX: AppState.selectionBox.x + AppState.selectionBox.w - 40,
+                            gradeY: AppState.selectionBox.y + 25,
+                            boxX: AppState.selectionBox.x + AppState.selectionBox.w - 55,
+                            boxY: AppState.selectionBox.y + AppState.selectionBox.h - 55
+                        }
+                    };
+                }
+            });
+
+            AppState.selectionBox = null;
+            document.getElementById('q-name').value = '';
+            document.getElementById('selected-coords-indicator').textContent = '未選択 (ドラッグして指定)';
+
+            showToast("成功", `設問「${name}」を追加しました。`);
+            
+            drawDragOverlay();
+            renderQuestionsConfigList();
+            updateSidebarCounts();
+        }
+
+        function removeQuestion(qId) {
+            AppState.questions = AppState.questions.filter(q => q.id !== qId);
+            
+            AppState.students.forEach(s => {
+                if (AppState.grades[s.id]) {
+                    delete AppState.grades[s.id][qId];
+                }
+            });
+
+            drawDragOverlay();
+            renderQuestionsConfigList();
+            updateSidebarCounts();
+        }
+
+        function renderQuestionsConfigList() {
+            const list = document.getElementById('questions-config-list');
+            list.innerHTML = '';
+
+            if (AppState.questions.length === 0) {
+                list.innerHTML = `
+                    <p class="text-xs text-slate-400 text-center py-6">設問は登録されていません。上のパネルと用紙ドラッグから追加してください。</p>
+                `;
+                return;
+            }
+
+            const groups = {};
+            AppState.questions.forEach(q => {
+                const grp = q.parentGroup || "その他設問";
+                if (!groups[grp]) groups[grp] = [];
+                groups[grp].push(q);
+            });
+
+            Object.entries(groups).forEach(([groupName, qList]) => {
+                const grpDiv = document.createElement('div');
+                grpDiv.className = "border border-slate-100 bg-slate-50/40 rounded-xl p-2.5 space-y-1.5";
+                grpDiv.innerHTML = `<h5 class="text-xs font-black text-indigo-700 border-b border-indigo-100 pb-1 mb-2 px-1">${groupName}</h5>`;
+                
+                qList.forEach(q => {
+                    const qItem = document.createElement('div');
+                    qItem.className = "flex items-center justify-between p-1.5 bg-white border border-slate-200/60 hover:border-indigo-400 rounded-lg transition-all text-xs";
+                    qItem.innerHTML = `
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-slate-800">${q.name}</span>
+                            <span class="text-[10px] text-slate-400 block font-mono">配点: ${q.maxScore}点 (P.${q.pageIndex+1})</span>
+                        </div>
+                        <button onclick="removeQuestion('${q.id}')" class="text-red-500 hover:text-red-700 font-bold px-1">&times;</button>
+                    `;
+                    grpDiv.appendChild(qItem);
+                });
+
+                list.appendChild(grpDiv);
+            });
+        }
+
+        // ================= KUSHIZASHI GRADING WORKSPACE CORE =================
+        function initGradingWorkspace() {
+            if (AppState.students.length === 0) {
+                showToast("警告", "採点対象の学生を読み込んでください。", "error");
+                switchTab('students');
+                return;
+            }
+            if (AppState.questions.length === 0) {
+                showToast("警告", "採点する設問エリアを定義してください。", "error");
+                switchTab('questions');
+                return;
+            }
+
+            const qSelector = document.getElementById('grading-question-selector');
+            qSelector.innerHTML = '';
+            
+            AppState.questions.forEach(q => {
+                const opt = document.createElement('option');
+                opt.value = q.id;
+                opt.textContent = `${q.parentGroup ? q.parentGroup + ' - ' : ''}${q.name} (配点: ${q.maxScore}点)`;
+                qSelector.appendChild(opt);
+            });
+
+            if (!AppState.activeQuestionId || !AppState.questions.some(q => q.id === AppState.activeQuestionId)) {
+                AppState.activeQuestionId = AppState.questions[0].id;
+            }
+
+            onGradingQuestionChanged();
+        }
+
+        function onGradingQuestionChanged() {
+            AppState.activeQuestionId = document.getElementById('grading-question-selector').value;
+            updateGradingStudentList();
+            renderActiveGradingCanvas();
+            updateWorkspaceProgress();
+        }
+
+        function updateGradingStudentList() {
+            const container = document.getElementById('grading-student-list');
+            container.innerHTML = '';
+
+            AppState.students.forEach((student, index) => {
+                const record = AppState.grades[student.id] ? AppState.grades[student.id][AppState.activeQuestionId] : null;
+                const scoreAssigned = record && record.score !== null;
+                const activeHighlight = index === AppState.activeStudentIndex;
+
+                const card = document.createElement('button');
+                card.onclick = () => { selectGradingStudent(index); };
+                
+                let scoreLabel = '<span class="text-xs text-slate-300 font-semibold">未採点</span>';
+                let borderTheme = activeHighlight ? "border-rose-500 bg-rose-50/20 animate-pulse" : "border-slate-100 hover:bg-slate-50";
+
+                if (scoreAssigned) {
+                    const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
+                    if (record.score === q.maxScore) {
+                        scoreLabel = `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-full text-[10px]">○ 満点 (${record.score})</span>`;
+                    } else if (record.score === 0) {
+                        scoreLabel = `<span class="px-2 py-0.5 bg-rose-100 text-rose-800 font-bold rounded-full text-[10px]">✓ 零点 (0)</span>`;
+                    } else {
+                        scoreLabel = `<span class="px-2 py-0.5 bg-amber-100 text-amber-800 font-bold rounded-full text-[10px]">△ 部分 (${record.score})</span>`;
+                    }
+                }
+
+                card.className = `w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between ${borderTheme}`;
+                card.innerHTML = `
+                    <div class="space-y-0.5">
+                        <span class="text-xs font-semibold text-slate-400 block font-mono">No.${index+1}</span>
+                        <span class="text-sm font-bold text-slate-800">${student.name}</span>
+                    </div>
+                    <div>${scoreLabel}</div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function selectGradingStudent(index) {
+            AppState.activeStudentIndex = index;
+            updateGradingStudentList();
+            renderActiveGradingCanvas();
+            updateWorkspaceProgress();
+        }
+
+        // NAVIGATION SHORTCUTS
+        function nextStudent() {
+            if (AppState.activeStudentIndex < AppState.students.length - 1) {
+                AppState.activeStudentIndex++;
+                selectGradingStudent(AppState.activeStudentIndex);
+            } else {
+                showToast("お知らせ", "最後の学生です。別の設問に切り替えるか完了出力に進んでください。");
+            }
+        }
+
+        function prevStudent() {
+            if (AppState.activeStudentIndex > 0) {
+                AppState.activeStudentIndex--;
+                selectGradingStudent(AppState.activeStudentIndex);
+            }
+        }
+
+        function updateWorkspaceProgress() {
+            const qId = AppState.activeQuestionId;
+            let total = AppState.students.length;
+            let gradedCount = 0;
+
+            AppState.students.forEach(s => {
+                if (AppState.grades[s.id] && AppState.grades[s.id][qId] && AppState.grades[s.id][qId].score !== null) {
+                    gradedCount++;
+                }
+            });
+
+            const percent = total > 0 ? Math.round((gradedCount / total) * 100) : 0;
+            document.getElementById('grading-progress-bar').style.width = `${percent}%`;
+            document.getElementById('grading-progress-text').textContent = `${gradedCount}/${total} (${percent}%)`;
+        }
+
+        // CORE CANVAS RENDERING WITH HIGH QUALITY CROPPING
+        async function renderActiveGradingCanvas() {
+            const student = AppState.students[AppState.activeStudentIndex];
+            const question = AppState.questions.find(q => q.id === AppState.activeQuestionId);
+            
+            if (!student || !question || !student.fileData) return;
+
+            document.getElementById('grading-current-student-name').textContent = student.name;
+
+            try {
+                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(student.fileData.slice(0)) });
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(question.pageIndex + 1);
+
+                const canvas = document.getElementById('grading-pdf-canvas');
+                const context = canvas.getContext('2d');
+
+                const viewport = page.getViewport({ scale: 2.0 });
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+
+                await page.render(renderContext).promise;
+
+                const overlay = document.getElementById('grading-interactive-overlay');
+                overlay.width = viewport.width;
+                overlay.height = viewport.height;
+
+                focusCanvasViewportOnQuestionRect(question.rect, viewport);
+                buildQuickScorePanel(question);
+
+                if (!AppState.grades[student.id]) AppState.grades[student.id] = {};
+                if (!AppState.grades[student.id][question.id]) {
+                    AppState.grades[student.id][question.id] = {
+                        score: null,
+                        stampPos: {
+                            gradeX: question.rect.x + question.rect.w - 40,
+                            gradeY: question.rect.y + 25,
+                            boxX: question.rect.x + question.rect.w - 55,
+                            boxY: question.rect.y + question.rect.h - 55
+                        }
+                    };
+                }
+
+                const currentGrade = AppState.grades[student.id][question.id];
+                if (currentGrade && currentGrade.score !== null) {
+                    document.getElementById('manual-score-input').value = currentGrade.score;
+                } else {
+                    document.getElementById('manual-score-input').value = '';
+                }
+
+                drawGradingStampsOnOverlay();
+                setupInteractiveOverlayDragging();
+            } catch (err) {
+                console.error("Grading canvas render failed:", err);
+            }
+        }
+
+        function focusCanvasViewportOnQuestionRect(qRect, viewport) {
+            const container = document.getElementById('grading-canvas-container');
+            const scaleRatio = 2.0 / 1.5;
+            const targetX = qRect.x * scaleRatio;
+            const targetY = qRect.y * scaleRatio;
+
+            const padding = 60;
+            const wrapper = document.getElementById('grading-canvas-wrapper');
+            wrapper.style.width = `${viewport.width}px`;
+            wrapper.style.height = `${viewport.height}px`;
+
+            container.scrollLeft = targetX - padding;
+            container.scrollTop = targetY - padding;
+        }
+
+        function buildQuickScorePanel(question) {
+            const container = document.getElementById('quick-score-buttons');
+            container.innerHTML = '';
+
+            const max = question.maxScore;
+            const options = [];
+
+            if (max === 1) {
+                options.push({ label: '正解 (1)', val: 1 });
+                options.push({ label: '不正解 (0)', val: 0 });
+            } else {
+                options.push({ label: '満点 (○)', val: max });
+                if (max % 2 === 0) {
+                    options.push({ label: '半分 (△)', val: max / 2 });
+                } else {
+                    options.push({ label: '部分点 (△)', val: Math.floor(max / 2) });
+                }
+                options.push({ label: '零点 (✓)', val: 0 });
+            }
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.onclick = () => { applyScorePreset(opt.val); };
+                btn.className = "py-2 bg-slate-100 hover:bg-rose-500 hover:text-white transition-all text-xs font-bold rounded-lg text-slate-700 border border-slate-200 hover:border-rose-600 shadow-sm";
+                btn.textContent = opt.label;
+                container.appendChild(btn);
+            });
+
+            document.getElementById('manual-score-max').textContent = `${max} 点`;
+        }
+
+        function applyScorePreset(scoreValue) {
+            document.getElementById('manual-score-input').value = scoreValue;
+            validateManualScoreInput();
+            commitGrading();
+        }
+
+        function validateManualScoreInput() {
+            const input = document.getElementById('manual-score-input');
+            const score = parseFloat(input.value);
+            const question = AppState.questions.find(q => q.id === AppState.activeQuestionId);
+            
+            if (!question) return;
+
+            if (score > question.maxScore) {
+                input.value = question.maxScore;
+            } else if (score < 0 || isNaN(score)) {
+                input.value = 0;
+            }
+
+            drawGradingStampsOnOverlay();
+        }
+
+        function drawGradingStampsOnOverlay() {
+            const overlay = document.getElementById('grading-interactive-overlay');
+            const ctx = overlay.getContext('2d');
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+            const student = AppState.students[AppState.activeStudentIndex];
+            const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
+            if (!student || !q) return;
+
+            const scoreStr = document.getElementById('manual-score-input').value;
+            if (scoreStr === '') {
+                document.getElementById('stamp-indicator-icon').textContent = '未決定';
+                document.getElementById('stamp-indicator-box').textContent = '未決定';
+                return;
+            }
+
+            const score = parseFloat(scoreStr);
+            const record = AppState.grades[student.id][q.id];
+            if (!record) return;
+
+            const ratio = 2.0 / 1.5; 
+            
+            let markX = record.stampPos.gradeX * ratio;
+            let markY = record.stampPos.gradeY * ratio;
+            let boxX = record.stampPos.boxX * ratio;
+            let boxY = record.stampPos.boxY * ratio;
+
+            ctx.strokeStyle = '#e11d48'; 
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = 'rgba(225, 29, 72, 0.2)';
+
+            if (score === q.maxScore) {
+                ctx.beginPath();
+                ctx.arc(markX, markY, 26, 0, Math.PI * 2);
+                ctx.stroke();
+                document.getElementById('stamp-indicator-icon').textContent = '○ (満点)';
+            } else if (score === 0) {
+                ctx.beginPath();
+                ctx.moveTo(markX - 16, markY - 5);
+                ctx.lineTo(markX - 4, markY + 12);
+                ctx.lineTo(markX + 20, markY - 14);
+                ctx.stroke();
+                document.getElementById('stamp-indicator-icon').textContent = '✓ (零点)';
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(markX, markY - 24);
+                ctx.lineTo(markX - 25, markY + 18);
+                ctx.lineTo(markX + 25, markY + 18);
+                ctx.closePath();
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#e11d48';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`+${score}`, markX, markY + 4);
+                
+                document.getElementById('stamp-indicator-icon').textContent = `△ (部分点: +${score})`;
+            }
+
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#e11d48';
+            ctx.lineWidth = 3;
+            
+            ctx.strokeRect(boxX, boxY, 46, 42);
+            
+            ctx.fillStyle = '#e11d48';
+            ctx.font = 'bold 20px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(score, boxX + 23, boxY + 21);
+
+            document.getElementById('stamp-indicator-box').textContent = `四角得点 [${score}]`;
+        }
+
+        function setupInteractiveOverlayDragging() {
+            const overlay = document.getElementById('grading-interactive-overlay');
+            const ratio = 2.0 / 1.5;
+
+            overlay.onmousedown = (e) => {
+                const rect = overlay.getBoundingClientRect();
+                const mouseX = (e.clientX - rect.left) * (overlay.width / rect.width);
+                const mouseY = (e.clientY - rect.top) * (overlay.height / rect.height);
+
+                const student = AppState.students[AppState.activeStudentIndex];
+                const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
+                if (!student || !q) return;
+
+                const record = AppState.grades[student.id][q.id];
+                if (!record) return;
+
+                const markX = record.stampPos.gradeX * ratio;
+                const markY = record.stampPos.gradeY * ratio;
+                const distGrade = Math.hypot(mouseX - markX, mouseY - markY);
+
+                const boxX = (record.stampPos.boxX + 23) * ratio;
+                const boxY = (record.stampPos.boxY + 21) * ratio;
+                const distBox = Math.hypot(mouseX - boxX, mouseY - boxY);
+
+                if (distGrade < 30) {
+                    AppState.activeStampDragging = true;
+                    AppState.activeStampType = 'grade';
+                    AppState.stampOffset = { x: mouseX - markX, y: mouseY - markY };
+                } else if (distBox < 30) {
+                    AppState.activeStampDragging = true;
+                    AppState.activeStampType = 'scorebox';
+                    AppState.stampOffset = { x: mouseX - boxX, y: mouseY - boxY };
+                }
+            };
+
+            overlay.onmousemove = (e) => {
+                if (!AppState.activeStampDragging) return;
+                const rect = overlay.getBoundingClientRect();
+                const mouseX = (e.clientX - rect.left) * (overlay.width / rect.width);
+                const mouseY = (e.clientY - rect.top) * (overlay.height / rect.height);
+
+                const student = AppState.students[AppState.activeStudentIndex];
+                const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
+                const record = AppState.grades[student.id][q.id];
+                if (!record) return;
+
+                const ratio = 2.0 / 1.5;
+
+                if (AppState.activeStampType === 'grade') {
+                    record.stampPos.gradeX = (mouseX - AppState.stampOffset.x) / ratio;
+                    record.stampPos.gradeY = (mouseY - AppState.stampOffset.y) / ratio;
+                } else if (AppState.activeStampType === 'scorebox') {
+                    record.stampPos.boxX = ((mouseX - AppState.stampOffset.x) / ratio) - 23;
+                    record.stampPos.boxY = ((mouseY - AppState.stampOffset.y) / ratio) - 21;
+                }
+
+                drawGradingStampsOnOverlay();
+            };
+
+            overlay.onmouseup = () => {
+                AppState.activeStampDragging = false;
+                AppState.activeStampType = null;
+            };
+        }
+
+        function resetStampPositions(mode) {
+            const student = AppState.students[AppState.activeStudentIndex];
+            const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
+            if (!student || !q) return;
+
+            const record = AppState.grades[student.id][q.id];
+            if (!record) return;
+
+            if (mode === 'top-right') {
+                record.stampPos = {
+                    gradeX: q.rect.x + q.rect.w - 40,
+                    gradeY: q.rect.y + 35,
+                    boxX: q.rect.x + q.rect.w - 55,
+                    boxY: q.rect.y + q.rect.h - 55
+                };
+            } else if (mode === 'center') {
+                record.stampPos = {
+                    gradeX: q.rect.x + (q.rect.w / 2),
+                    gradeY: q.rect.y + (q.rect.h / 2),
+                    boxX: q.rect.x + (q.rect.w / 2) - 23,
+                    boxY: q.rect.y + (q.rect.h / 2) + 15
+                };
+            }
+
+            drawGradingStampsOnOverlay();
+            showToast("配置リセット", "スタンプを初期指定位置に配置しました。");
+        }
+
+        // GRADE COMMIT LOGIC
+        function commitGrading() {
+            const student = AppState.students[AppState.activeStudentIndex];
+            const q = AppState.questions.find(item => item.id === AppState.activeQuestionId);
+            if (!student || !q) return;
+
+            const scoreStr = document.getElementById('manual-score-input').value;
+            if (scoreStr === '') {
+                showToast("注意", "点数が空欄です。点数を入力するかクイック配点をクリックしてください。", "error");
+                return;
+            }
+
+            const score = parseFloat(scoreStr);
+            if (!AppState.grades[student.id]) AppState.grades[student.id] = {};
+            if (!AppState.grades[student.id][q.id]) {
+                AppState.grades[student.id][q.id] = {
+                    score: score,
+                    stampPos: {
+                        gradeX: q.rect.x + q.rect.w - 40,
+                        gradeY: q.rect.y + 25,
+                        boxX: q.rect.x + q.rect.w - 55,
+                        boxY: q.rect.y + q.rect.h - 55
+                    }
+                };
+            } else {
+                AppState.grades[student.id][q.id].score = score;
+            }
+
+            showToast("保存完了", `${student.name}さんの「${q.name}」得点: ${score}点 を保存しました。`);
+
+            updateGradingStudentList();
+            updateWorkspaceProgress();
+
+            setTimeout(() => {
+                nextStudent();
+            }, 300);
+        }
+
+        // Keyboard Shortcut listeners
+        window.addEventListener('keydown', (e) => {
+            if (AppState.activeTab !== 'grading') return;
+            if (document.activeElement.tagName === 'INPUT' && document.activeElement.id !== 'manual-score-input') return;
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                commitGrading();
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                nextStudent();
+            } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                prevStudent();
+            }
+        });
+
+        // ================= SCREEN 4: EXPORTS AND ANALYTICS CONTROLLERS =================
+        function initExportsDashboard() {
+            if (AppState.students.length === 0 || AppState.questions.length === 0) {
+                showToast("警告", "採点が十分に進んでいません。学生と設問を設定してください。");
+                switchTab('students');
+                return;
+            }
+
+            let totalPossiblePoints = 0;
+            AppState.questions.forEach(q => { totalPossiblePoints += q.maxScore; });
+
+            let grandGradedCells = 0;
+            let grandTotalActiveCells = AppState.students.length * AppState.questions.length;
+            
+            let sumScores = 0;
+            let gradedStudentsWithFullPapers = 0;
+            let perfectGradesCount = 0;
+
+            AppState.students.forEach(s => {
+                let studentTotalScore = 0;
+                let fullyGraded = true;
+
+                AppState.questions.forEach(q => {
+                    const rec = AppState.grades[s.id] ? AppState.grades[s.id][q.id] : null;
+                    if (rec && rec.score !== null) {
+                        grandGradedCells++;
+                        studentTotalScore += rec.score;
+                    } else {
+                        fullyGraded = false;
+                    }
+                });
+
+                if (fullyGraded) {
+                    gradedStudentsWithFullPapers++;
+                    sumScores += studentTotalScore;
+                    if (studentTotalScore === totalPossiblePoints) {
+                        perfectGradesCount++;
+                    }
+                }
+            });
+
+            const progressPercent = grandTotalActiveCells > 0 ? (grandGradedCells / grandTotalActiveCells) * 100 : 0;
+            document.getElementById('stat-progress').textContent = `${progressPercent.toFixed(1)}%`;
+
+            const avgText = gradedStudentsWithFullPapers > 0 ? (sumScores / gradedStudentsWithFullPapers).toFixed(1) : "0.0";
+            document.getElementById('stat-average').textContent = `${avgText} / ${totalPossiblePoints} 点`;
+            document.getElementById('stat-perfect-scores').textContent = `${perfectGradesCount} 名`;
+
+            buildMatrixSheet();
+        }
+
+        function buildMatrixSheet() {
+            const table = document.getElementById('matrix-table');
+            table.innerHTML = '';
+
+            const parentGroups = [...new Set(AppState.questions.map(q => q.parentGroup).filter(Boolean))];
+
+            const thead = document.createElement('thead');
+            thead.className = "bg-slate-100 text-[11px] font-bold text-slate-500 border-b border-slate-200 uppercase tracking-wider";
+            
+            let headerHTML = `
+                <tr>
+                    <th class="py-3 px-4 font-bold text-slate-700 min-w-[150px]">氏名 / 設問</th>`;
+            
+            AppState.questions.forEach(q => {
+                headerHTML += `<th class="py-3 px-3 text-center border-l border-slate-200">${q.parentGroup ? q.parentGroup + '<br>' : ''}${q.name}<br><span class="text-[9px] text-slate-400 font-normal">(${q.maxScore}点)</span></th>`;
+            });
+
+            parentGroups.forEach(grpName => {
+                headerHTML += `<th class="py-3 px-3 text-center border-l border-indigo-200 bg-indigo-50/50 text-indigo-700">${grpName}<br>合計</th>`;
+            });
+
+            headerHTML += `
+                    <th class="py-3 px-4 text-right border-l-2 border-slate-300 text-rose-600 bg-rose-50/20">総合得点</th>
+                </tr>`;
+            thead.innerHTML = headerHTML;
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            tbody.className = "divide-y divide-slate-200 text-xs text-slate-700";
+
+            AppState.students.forEach(student => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-all font-medium";
+
+                let rowHTML = `<td class="py-3 px-4 font-bold text-slate-900">${student.name}</td>`;
+                let grandScoreSum = 0;
+
+                AppState.questions.forEach(q => {
+                    const grade = AppState.grades[student.id] ? AppState.grades[student.id][q.id] : null;
+                    if (grade && grade.score !== null) {
+                        grandScoreSum += grade.score;
+                        rowHTML += `<td class="py-3 px-3 text-center border-l border-slate-100 font-mono font-bold">${grade.score}</td>`;
+                    } else {
+                        rowHTML += `<td class="py-3 px-3 text-center border-l border-slate-100 text-slate-300 italic font-normal">未採点</td>`;
+                    }
+                });
+
+                parentGroups.forEach(grpName => {
+                    let groupSum = 0;
+                    AppState.questions.filter(q => q.parentGroup === grpName).forEach(q => {
+                        const grade = AppState.grades[student.id] ? AppState.grades[student.id][q.id] : null;
+                        if (grade && grade.score !== null) {
+                            groupSum += grade.score;
+                        }
+                    });
+                    rowHTML += `<td class="py-3 px-3 text-center border-l border-indigo-100 bg-indigo-50/30 font-bold text-indigo-600 font-mono">${groupSum}</td>`;
+                });
+
+                rowHTML += `<td class="py-3 px-4 text-right border-l-2 border-slate-300 font-black text-rose-600 bg-rose-50/10 font-mono text-sm">${grandScoreSum}</td>`;
+                
+                tr.innerHTML = rowHTML;
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(tbody);
+        }
+
+        function exportCSV() {
+            if (AppState.students.length === 0 || AppState.questions.length === 0) return;
+
+            let csvContent = "\uFEFF"; 
+            const parentGroups = [...new Set(AppState.questions.map(q => q.parentGroup).filter(Boolean))];
+            const headers = ["学生氏名"];
+            
+            AppState.questions.forEach(q => {
+                headers.push(`${q.parentGroup ? q.parentGroup + '_' : ''}${q.name}(満点:${q.maxScore})`);
+            });
+            parentGroups.forEach(gName => {
+                headers.push(`${gName}合計`);
+            });
+            headers.push("総合点数");
+
+            csvContent += headers.map(h => `"${h}"`).join(",") + "\n";
+
+            AppState.students.forEach(student => {
+                const row = [student.name];
+                let total = 0;
+
+                AppState.questions.forEach(q => {
+                    const rec = AppState.grades[student.id] ? AppState.grades[student.id][q.id] : null;
+                    const val = (rec && rec.score !== null) ? rec.score : "";
+                    row.push(val);
+                    if (rec && rec.score !== null) total += rec.score;
+                });
+
+                parentGroups.forEach(gName => {
+                    let gSum = 0;
+                    AppState.questions.filter(q => q.parentGroup === gName).forEach(q => {
+                        const rec = AppState.grades[student.id] ? AppState.grades[student.id][q.id] : null;
+                        if (rec && rec.score !== null) gSum += rec.score;
+                    });
+                    row.push(gSum);
+                });
+
+                row.push(total);
+                csvContent += row.map(v => `"${v}"`).join(",") + "\n";
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `kushizashi_grading_report_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast("エクスポート完了", "成績CSVスコアシートをダウンロードしました。");
+        }
+
+        // JSON PERSISTENCE CONTROL ENGINE
+        function saveSession() {
+            const sessionData = {
+                version: "1.0",
+                questions: AppState.questions,
+                grades: AppState.grades,
+                studentsMetadata: AppState.students.map(s => ({ id: s.id, name: s.name, fileName: s.fileName }))
+            };
+
+            const jsonString = JSON.stringify(sessionData, null, 2);
+            const blob = new Blob([jsonString], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `kushizashi_session_${Date.now()}.json`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast("セッション保存", "JSONセッションファイルをローカルに保存しました！次回PDFとセットで復元可能です。");
+        }
+
+        function loadSession(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    AppState.questions = data.questions || [];
+                    AppState.grades = data.grades || {};
+                    
+                    if (data.studentsMetadata) {
+                        AppState.students = data.studentsMetadata.map(meta => ({
+                            id: meta.id,
+                            name: meta.name,
+                            fileName: meta.fileName,
+                            fileData: null, 
+                            pageCount: 1
+                        }));
+                    }
+
+                    updateStudentListTable();
+                    updateSidebarCounts();
+                    showToast("セッション復元", "JSONセッションデータをロードしました。続けて対象のPDFを読み込むか、採点を開始できます！");
+                } catch (err) {
+                    showToast("エラー", "JSONファイルの構造が正しくありません。", "error");
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ================= HIGH-FIDELITY VECTOR PDF COMPILING ENGINE =================
+        async function exportGradedPDFs() {
+            if (AppState.students.length === 0) {
+                showToast("エラー", "エクスポート対象の学生がいません。", "error");
+                return;
+            }
+
+            const unattachedStudents = AppState.students.filter(s => !s.fileData);
+            if (unattachedStudents.length > 0) {
+                showToast("エラー", "一部の答案PDFデータがロードされていません。セッション復帰後は再読込が必要です。", "error");
+                return;
+            }
+
+            showToast("PDFアノテーション中...", "各答案用紙上に赤い正誤スタンプと得点欄を配置して、高品質な採点後PDFを作成しています。しばらくお待ちください。");
+
+            for (let i = 0; i < AppState.students.length; i++) {
+                const s = AppState.students[i];
+                
+                try {
+                    const pdfDoc = await PDFLib.PDFDocument.load(new Uint8Array(s.fileData.slice(0)));
+                    const helveticaFont = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+                    const pages = pdfDoc.getPages();
+
+                    AppState.questions.forEach(q => {
+                        const rec = AppState.grades[s.id] ? AppState.grades[s.id][q.id] : null;
+                        if (!rec || rec.score === null) return; 
+
+                        const page = pages[q.pageIndex];
+                        if (!page) return;
+
+                        const { width, height } = page.getSize();
+                        
+                        const canvasW = document.getElementById('pdf-template-canvas').width || 800;
+                        const canvasH = document.getElementById('pdf-template-canvas').height || 1000;
+
+                        const ratioX = width / canvasW;
+                        const ratioY = height / canvasH;
+
+                        const markCanvasX = rec.stampPos.gradeX;
+                        const markCanvasY = rec.stampPos.gradeY;
+                        
+                        const markPdfX = markCanvasX * ratioX;
+                        const markPdfY = (canvasH - markCanvasY) * ratioY;
+
+                        const redColor = PDFLib.rgb(0.88, 0.11, 0.27);
+
+                        if (rec.score === q.maxScore) {
+                            page.drawCircle({
+                                x: markPdfX,
+                                y: markPdfY,
+                                radius: 24,
+                                borderColor: redColor,
+                                borderWidth: 3.5
+                            });
+                        } else if (rec.score === 0) {
+                            page.drawLine({
+                                start: { x: markPdfX - 14, y: markPdfY + 4 },
+                                end: { x: markPdfX - 3, y: markPdfY - 12 },
+                                thickness: 3.5,
+                                color: redColor
+                            });
+                            page.drawLine({
+                                start: { x: markPdfX - 3, y: markPdfY - 12 },
+                                end: { x: markPdfX + 16, y: markPdfY + 14 },
+                                thickness: 3.5,
+                                color: redColor
+                            });
+                        } else {
+                            page.drawLine({
+                                start: { x: markPdfX, y: markPdfY + 22 },
+                                end: { x: markPdfX - 22, y: markPdfY - 16 },
+                                thickness: 3.5,
+                                color: redColor
+                            });
+                            page.drawLine({
+                                start: { x: markPdfX - 22, y: markPdfY - 16 },
+                                end: { x: markPdfX + 22, y: markPdfY - 16 },
+                                thickness: 3.5,
+                                color: redColor
+                            });
+                            page.drawLine({
+                                start: { x: markPdfX + 22, y: markPdfY - 16 },
+                                end: { x: markPdfX, y: markPdfY + 22 },
+                                thickness: 3.5,
+                                color: redColor
+                            });
+
+                            page.drawText(`+${rec.score}`, {
+                                x: markPdfX - 11,
+                                y: markPdfY - 7,
+                                size: 14,
+                                font: helveticaFont,
+                                color: redColor
+                            });
+                        }
+
+                        const boxCanvasX = rec.stampPos.boxX;
+                        const boxCanvasY = rec.stampPos.boxY;
+
+                        const boxPdfX = boxCanvasX * ratioX;
+                        const boxPdfY = (canvasH - boxCanvasY) * ratioY;
+
+                        const boxW = 46 * ratioX;
+                        const boxH = 42 * ratioY;
+
+                        page.drawRectangle({
+                            x: boxPdfX,
+                            y: boxPdfY - boxH, 
+                            width: boxW,
+                            height: boxH,
+                            borderColor: redColor,
+                            borderWidth: 2.5
+                        });
+
+                        page.drawText(`${rec.score}`, {
+                            x: boxPdfX + (boxW / 2) - 8,
+                            y: boxPdfY - (boxH / 2) - 5,
+                            size: 16,
+                            font: helveticaFont,
+                            color: redColor
+                        });
+                    });
+
+                    const pdfBytes = await pdfDoc.save();
+                    
+                    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.setAttribute("download", `graded_${s.name}.pdf`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                } catch (err) {
+                    console.error(`Error annotating student ${s.name}:`, err);
+                    showToast("エラー", `${s.name}のPDFへの書き込みに失敗しました。`, "error");
+                }
+            }
+
+            showToast("成功", "すべての採点後PDF（丸バツアノテーション入り）のダウンロードが完了しました。");
+        }
+
+        // PERFORMANCE CARD REPORT GENERATOR
+        function downloadPerformanceReport() {
+            if (AppState.students.length === 0) return;
+
+            let reportHTML = `<!DOCTYPE html>
+            <html lang="ja">
+            <head>
+                <meta charset="UTF-8">
+                <title>受験生成績診断カルテ</title>
+                <script src="https://cdn.tailwindcss.com"><\/script>
+                <style>body { font-family: 'sans-serif'; }</style>
+            </head>
+            <body class="bg-slate-100 p-8">
+                <div class="max-w-4xl mx-auto space-y-6">
+                    <h1 class="text-2xl font-black text-slate-800 border-b-4 border-rose-500 pb-2">設問別・個人成績評価カルテ一覧</h1>`;
+
+            AppState.students.forEach(student => {
+                let sumScore = 0;
+                let maxPossible = 0;
+                let rowsHTML = "";
+
+                AppState.questions.forEach(q => {
+                    const grade = AppState.grades[student.id] ? AppState.grades[student.id][q.id] : null;
+                    const val = (grade && grade.score !== null) ? grade.score : 0;
+                    sumScore += val;
+                    maxPossible += q.maxScore;
+
+                    rowsHTML += `
+                        <tr class="border-b border-slate-100">
+                            <td class="py-2 font-bold text-slate-700">${q.parentGroup ? q.parentGroup + ' ' : ''}${q.name}</td>
+                            <td class="py-2 font-mono text-center font-bold text-slate-900">${val} / ${q.maxScore}</td>
+                            <td class="py-2 text-right">
+                                ${val === q.maxScore ? '<span class="text-emerald-600 font-bold">○ 満点</span>' : val === 0 ? '<span class="text-rose-500">✓ 零点</span>' : '<span class="text-amber-500">△ 部分</span>'}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                const progressRatio = maxPossible > 0 ? (sumScore / maxPossible) : 0;
+                let feedback = "総合評価：大変よくできました！この調子で学習を継続してください。";
+                let badgeColor = "bg-emerald-100 text-emerald-800";
+                
+                if (progressRatio < 0.4) {
+                    feedback = "総合評価：復習がかなり必要です。間違えた部分をもう一度解き直しましょう。";
+                    badgeColor = "bg-rose-100 text-rose-800";
+                } else if (progressRatio < 0.7) {
+                    feedback = "総合評価：概ね良好ですが、部分点となった箇所の理解を深めましょう。";
+                    badgeColor = "bg-amber-100 text-amber-800";
+                }
+
+                reportHTML += `
+                    <div class="bg-white p-6 rounded-2xl shadow border border-slate-200 space-y-4 page-break mt-6">
+                        <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                            <div>
+                                <span class="text-xs text-slate-400 font-bold block">STUDENT GRADE CARD</span>
+                                <h3 class="text-lg font-black text-slate-800">${student.name} 殿</h3>
+                            </div>
+                            <div class="px-4 py-2 ${badgeColor} rounded-xl font-black text-sm">
+                                総得点: ${sumScore} / ${maxPossible} 点
+                            </div>
+                        </div>
+
+                        <table class="w-full text-xs">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-100 text-left">
+                                    <th class="pb-2">設問</th>
+                                    <th class="pb-2 text-center">得点 / 配点</th>
+                                    <th class="pb-2 text-right">判定</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHTML}
+                            </tbody>
+                        </table>
+
+                        <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs text-slate-600 leading-relaxed font-semibold">
+                            ${feedback}
+                        </div>
+                    </div>
+                `;
+            });
+
+            reportHTML += `
+                </div>
+            </body>
+            </html>`;
+
+            const blob = new Blob([reportHTML], { type: "text/html;charset=utf-8;" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `personal_scorecards_${Date.now()}.html`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast("ダウンロード完了", "全受験生の成績カード集（HTML）を出力しました。");
+        }
+
+    </script>
+</body>
+</html>
