@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>採点エディタ - Efficient Scorer v1.9.7</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body { touch-action: none; -webkit-user-select: none; user-select: none; overflow: hidden; }
+        #canvas-container { 
+            position: relative; 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background: #cbd5e1;
+            touch-action: none;
+            cursor: grab;
+        }
+        #canvas-container:active { cursor: grabbing; }
+        canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; pointer-events: none; }
+        
+        .tab-btn.active { background-color: #1e293b !important; color: white !important; }
+        
+        .scoring-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0.5rem auto;
+            padding: 0.5rem;
+        }
+        .crop-container {
+            flex-grow: 1;
+            background: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 160px;
+            border-radius: 0.25rem;
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
+        }
+        .crop-container canvas {
+            position: static;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transform: none !important;
+        }
+        .score-controls {
+            width: 180px;
+            padding-left: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .score-input {
+            font-size: 2rem;
+            font-weight: 800;
+            width: 80px;
+            padding: 0.2rem;
+            border-bottom: 3px solid #cbd5e1;
+            text-align: center;
+            color: #1e293b;
+        }
+        .score-input:focus { border-color: #3b82f6; outline: none; background: #eff6ff; }
+        
+        .guide-label {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 20px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 50;
+            pointer-events: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .mode-question { background: #1e293b; color: white; }
+        .mode-total { background: #f59e0b; color: white; }
+        .mode-group { background: #10b981; color: white; }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <div class="flex flex-col h-screen">
+        <header class="bg-white border-b p-3 flex justify-between items-center shrink-0 shadow-sm z-30">
+            <div class="flex items-center gap-4">
+                <h1 class="text-lg font-black tracking-tighter text-slate-800 flex items-center gap-2">
+                    <span class="bg-slate-800 text-white p-1 rounded">ES</span>
+                    SCORER <span class="text-slate-400 font-medium text-[10px] ml-1 tracking-normal">v1.9.7</span>
+                </h1>
+            </div>
+            <div id="stats-summary" class="hidden flex items-center gap-6">
+                <div class="text-right">
+                    <span class="text-[10px] text-slate-400 block font-bold">全体平均点</span>
+                    <span id="total-avg" class="text-blue-600 font-black text-xl">0.0</span> <span class="text-slate-400 text-sm">/ <span id="total-max">0</span></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Step 1: File Upload -->
+        <section id="step-1" class="flex-grow flex items-center justify-center p-6">
+            <div class="max-w-md w-full border-2 border-dashed border-slate-300 rounded-2xl p-12 text-center bg-white hover:border-blue-400 transition-all cursor-pointer shadow-sm">
+                <input type="file" id="file-input" multiple accept="application/pdf,image/*" class="hidden">
+                <label for="file-input" class="cursor-pointer block">
+                    <div class="text-slate-200 text-6xl mb-6">📄</div>
+                    <div class="text-xl font-bold text-slate-700">採点するファイルをアップロード</div>
+                    <p class="text-slate-400 text-sm mt-3">PDFまたは画像を選択してください</p>
+                </label>
+            </div>
+        </section>
+
+        <!-- Config Modal -->
+        <div id="config-modal" class="modal-overlay hidden">
+            <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4">
+                <h3 class="text-xl font-black mb-6 text-slate-800">読み込み設定</h3>
+                <div class="space-y-4">
+                    <button onclick="setConfigAndStart(1)" class="w-full p-5 border-2 border-slate-100 rounded-2xl hover:border-blue-500 hover:bg-blue-50 transition-all text-left group">
+                        <div class="font-bold text-slate-700 group-hover:text-blue-700">1ファイルにつき 1人分</div>
+                        <div class="text-[11px] text-slate-400 mt-1 font-medium">（例：出席番号順に並んだ個別のPDF）</div>
+                    </button>
+                    
+                    <div class="p-5 border-2 border-slate-100 rounded-2xl bg-slate-50">
+                        <div class="font-bold text-slate-700 mb-3 text-left">1ファイルに 全員分</div>
+                        <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200">
+                            <label class="text-xs font-bold text-slate-500">1人あたり</label>
+                            <input type="number" id="pages-per-student" value="1" min="1" class="w-16 border-b-2 border-slate-300 p-1 font-black text-center text-lg outline-none focus:border-blue-500">
+                            <span class="text-xs font-bold text-slate-500">ページ</span>
+                        </div>
+                        <button onclick="setConfigAndStart(0)" class="w-full mt-4 bg-slate-800 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-700 transition-all shadow-lg shadow-slate-200">
+                            この構成で読み込む
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Settings -->
+        <section id="step-2" class="hidden flex flex-col flex-grow overflow-hidden relative">
+            <div class="flex bg-slate-100 border-b p-1 gap-1 overflow-x-auto shrink-0 no-scrollbar" id="question-tabs"></div>
+            
+            <div class="flex flex-grow overflow-hidden">
+                <!-- Sidebar -->
+                <div class="w-72 bg-white border-r p-5 overflow-y-auto shrink-0 flex flex-col gap-6 shadow-inner z-20">
+                    <div class="space-y-5">
+                        <div class="flex justify-between items-end">
+                            <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest">設問プロパティ</h3>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 mb-1 block">設問名</label>
+                                <input type="text" id="q-label" class="w-full border-2 border-slate-100 p-2.5 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-colors" oninput="saveCurrentSettings()">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-400 mb-1 block">配点</label>
+                                    <input type="number" id="q-max" class="w-full border-2 border-slate-100 p-2.5 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-colors" oninput="saveCurrentSettings()">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-400 mb-1 block">大問グループ</label>
+                                    <input type="number" id="q-group" value="1" class="w-full border-2 border-slate-100 p-2.5 rounded-xl text-sm font-bold outline-none focus:border-blue-500 transition-colors" oninput="saveCurrentSettings()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t space-y-3">
+                        <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest">スタンプ配置</h3>
+                        <button onclick="toggleTotalMode('total')" class="w-full bg-orange-50 border-2 border-orange-100 p-3 rounded-xl text-[11px] font-black text-orange-600 text-left hover:bg-orange-100 transition-all">総合計の枠を配置</button>
+                        <div id="group-pos-container" class="space-y-2"></div>
+                    </div>
+
+                    <div class="mt-auto pt-6 border-t">
+                        <button id="go-to-scoring" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all transform active:scale-95">
+                            採点画面へ進む
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canvas Area -->
+                <div class="flex-grow relative overflow-hidden">
+                    <div class="guide-label mode-question" id="guide-label">設問範囲をタップ（始点・終点）</div>
+                    <div id="canvas-container">
+                        <canvas id="base-canvas"></canvas>
+                        <canvas id="selection-canvas"></canvas>
+                    </div>
+                    <!-- Zoom Controls -->
+                    <div class="absolute bottom-6 right-6 flex flex-col gap-2">
+                        <button onclick="adjustZoom(1.2)" class="w-10 h-10 bg-white shadow-lg rounded-full font-bold text-slate-600 hover:bg-slate-50">＋</button>
+                        <button onclick="adjustZoom(0.8)" class="w-10 h-10 bg-white shadow-lg rounded-full font-bold text-slate-600 hover:bg-slate-50">－</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: Scoring List -->
+        <section id="step-3" class="hidden flex flex-col flex-grow overflow-hidden bg-slate-100">
+            <div class="bg-white p-3 px-6 flex justify-between items-center shadow-sm shrink-0 z-20 border-b">
+                <div class="flex items-center gap-4">
+                    <button onclick="backToSettings()" class="text-slate-400 hover:text-slate-600 font-bold text-xs uppercase tracking-tighter">← Back to Setup</button>
+                    <h2 id="active-q-display" class="font-black text-xl text-slate-800 ml-6">問1 <span class="text-slate-300 font-medium">/ 10pts</span></h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="downloadCSV()" class="text-slate-500 border-2 border-slate-100 px-4 py-2 rounded-xl font-bold text-[11px] hover:bg-slate-50">CSV出力</button>
+                    <button id="export-btn" onclick="exportGradedPDFs()" class="bg-slate-800 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-slate-700 text-[11px] transition-all">全員分をZIPで保存</button>
+                </div>
+            </div>
+            <div id="scoring-list" class="flex-grow overflow-y-auto p-4 space-y-2"></div>
+            <div class="bg-white border-t p-4 shrink-0 flex justify-center gap-4 shadow-lg z-30">
+                <button onclick="prevQuestion()" class="bg-slate-100 text-slate-600 px-10 py-4 rounded-2xl font-black text-sm hover:bg-slate-200 transition-all">前へ</button>
+                <button onclick="nextQuestion()" class="bg-blue-600 text-white px-16 py-4 rounded-2xl font-black text-sm hover:bg-blue-700 transition-all shadow-xl shadow-blue-100">次へ</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        const { jsPDF } = window.jspdf;
+
+        // State Management
+        let students = [];
+        let questions = [];
+        let allPages = []; // 最初の生徒分のCanvas（テンプレート）
+        let activeQIdx = -1;
+        let zoom = 1.0;
+        let offsetX = 0;
+        let offsetY = 0;
+        let selectionStart = null;
+        let activePointers = new Map();
+        let isDragging = false;
+        let lastTouchPos = null;
+        let initialDistance = 0;
+        let initialZoom = 1.0;
+        let totalScoreRect = null;
+        let groupScoreRects = {};
+        let currentSettingMode = 'question';
+        let rawFiles = [];
+
+        const container = document.getElementById('canvas-container');
+        const bCanvas = document.getElementById('base-canvas');
+        const sCanvas = document.getElementById('selection-canvas');
+
+        // Step 1: File Input
+        document.getElementById('file-input').onchange = (e) => {
+            rawFiles = Array.from(e.target.files);
+            if (rawFiles.length) document.getElementById('config-modal').classList.remove('hidden');
+        };
+
+        async function setConfigAndStart(isOnePerFile) {
+            document.getElementById('config-modal').classList.add('hidden');
+            students = [];
+            allPages = [];
+            const SCALE = 2.0;
+
+            if (isOnePerFile) {
+                // 個別ファイル
+                for (let i = 0; i < rawFiles.length; i++) {
+                    const file = rawFiles[i];
+                    const name = file.name.replace(/\.[^/.]+$/, "");
+                    const pages = await extractPages(file, SCALE);
+                    students.push({ name, pages, scores: {} });
+                    if (i === 0) allPages = pages; 
+                }
+            } else {
+                // 1ファイルに全員分（1人あたりのページ数指定）
+                const pagesPerStudent = parseInt(document.getElementById('pages-per-student').value) || 1;
+                const file = rawFiles[0];
+                const fullPages = await extractPages(file, SCALE);
+                
+                allPages = fullPages.slice(0, pagesPerStudent);
+
+                for (let i = 0; i < fullPages.length; i += pagesPerStudent) {
+                    const studentPages = fullPages.slice(i, i + pagesPerStudent);
+                    students.push({ 
+                        name: `Student ${(i/pagesPerStudent)+1}`, 
+                        pages: studentPages, 
+                        scores: {} 
+                    });
+                }
+            }
+
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            if(!questions.length) addQuestion();
+            initCanvas();
+        }
+
+        async function extractPages(file, scale) {
+            const pages = [];
+            if (file.type === 'application/pdf') {
+                const pdf = await pdfjsLib.getDocument(await file.arrayBuffer()).promise;
+                for (let pNum = 1; pNum <= pdf.numPages; pNum++) {
+                    const page = await pdf.getPage(pNum), vp = page.getViewport({ scale });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = vp.width; canvas.height = vp.height;
+                    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+                    pages.push(canvas);
+                }
+            } else {
+                const img = await loadImage(file);
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width; canvas.height = img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0);
+                pages.push(canvas);
+            }
+            return pages;
+        }
+
+        function loadImage(file) { return new Promise(r => { const reader = new FileReader(); reader.onload = e => { const i = new Image(); i.onload = () => r(i); i.src = e.target.result; }; reader.readAsDataURL(file); }); }
+
+        // Setting Logic
+        function addQuestion() {
+            questions.push({ id: Date.now(), label: `問${questions.length + 1}`, group: 1, max: 10, rect: null });
+            activeQIdx = questions.length - 1;
+            renderTabs(); updateForm(); renderGroupButtons(); drawSelection();
+        }
+
+        function switchTab(idx) { currentSettingMode = 'question'; activeQIdx = idx; renderTabs(); updateForm(); drawSelection(); updateGuide(); }
+
+        function updateForm() {
+            const q = questions[activeQIdx];
+            document.getElementById('q-label').value = q.label;
+            document.getElementById('q-group').value = q.group;
+            document.getElementById('q-max').value = q.max;
+        }
+
+        function saveCurrentSettings() {
+            const q = questions[activeQIdx]; if(!q) return;
+            q.label = document.getElementById('q-label').value;
+            q.group = parseInt(document.getElementById('q-group').value) || 1;
+            q.max = parseFloat(document.getElementById('q-max').value) || 0;
+            renderTabs(); renderGroupButtons(); updateGlobalStats();
+        }
+
+        function renderTabs() {
+            const html = questions.map((q, i) => `<button onclick="switchTab(${i})" class="tab-btn px-5 py-3 rounded-t-xl font-black shrink-0 text-[11px] uppercase tracking-tighter ${i === activeQIdx && currentSettingMode === 'question' ? 'active bg-white text-slate-800' : 'text-slate-400'}">${q.label || '?'}</button>`).join('') + `<button onclick="addQuestion()" class="px-5 py-3 text-blue-500 font-black text-[11px]">+ NEW</button>`;
+            document.getElementById('question-tabs').innerHTML = html;
+        }
+
+        function renderGroupButtons() {
+            const groups = [...new Set(questions.map(q => q.group))].sort((a,b)=>a-b);
+            const container = document.getElementById('group-pos-container');
+            container.innerHTML = groups.map(g => `<button onclick="toggleTotalMode('group-${g}')" class="w-full bg-emerald-50 border-2 border-emerald-100 p-3 rounded-xl text-[11px] font-black text-emerald-600 text-left hover:bg-emerald-100 transition-all">大問${g}の合計枠を配置</button>`).join('');
+        }
+
+        function toggleTotalMode(mode) { currentSettingMode = mode; renderTabs(); drawSelection(); updateGuide(); }
+
+        function updateGuide() {
+            const guide = document.getElementById('guide-label');
+            guide.className = "guide-label";
+            if(currentSettingMode === 'question') { guide.innerText = "設問範囲を指定 (2点をタップ)"; guide.classList.add('mode-question'); }
+            else if(currentSettingMode === 'total') { guide.innerText = "総合計スタンプの位置を指定"; guide.classList.add('mode-total'); }
+            else { guide.innerText = `大問${currentSettingMode.split('-')[1]}の合計位置を指定`; guide.classList.add('mode-group'); }
+        }
+
+        // Canvas Interaction
+        function initCanvas() {
+            let totalH = 0, maxW = 0;
+            allPages.forEach(c => { totalH += c.height; maxW = Math.max(maxW, c.width); });
+            bCanvas.width = sCanvas.width = maxW; bCanvas.height = sCanvas.height = totalH;
+            resetZoom();
+        }
+
+        function resetZoom() { 
+            zoom = (container.clientWidth * 0.9) / (bCanvas.width || 1); 
+            offsetX = (container.clientWidth - bCanvas.width * zoom) / 2; 
+            offsetY = 40; 
+            applyTransform(); 
+        }
+
+        function adjustZoom(factor) {
+            const oldZoom = zoom;
+            zoom *= factor;
+            offsetX = container.clientWidth / 2 - (container.clientWidth / 2 - offsetX) * (zoom / oldZoom);
+            offsetY = container.clientHeight / 2 - (container.clientHeight / 2 - offsetY) * (zoom / oldZoom);
+            applyTransform();
+        }
+
+        function applyTransform() {
+            const transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`;
+            bCanvas.style.transform = sCanvas.style.transform = transform;
+            const ctx = bCanvas.getContext('2d'); ctx.clearRect(0,0,bCanvas.width, bCanvas.height);
+            let currentY = 0; 
+            allPages.forEach(c => { ctx.drawImage(c, 0, currentY); currentY += c.height; });
+            drawSelection();
+        }
+
+        // Enhanced Pointer Events for Pan/Zoom
+        container.onpointerdown = (e) => {
+            activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (activePointers.size === 1) {
+                isDragging = true;
+                lastTouchPos = { x: e.clientX, y: e.clientY };
+            } else if (activePointers.size === 2) {
+                isDragging = false;
+                const pts = Array.from(activePointers.values());
+                initialDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                initialZoom = zoom;
+            }
+        };
+
+        container.onpointermove = (e) => {
+            if (!activePointers.has(e.pointerId)) return;
+            activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            
+            if (activePointers.size === 1 && isDragging) {
+                const dx = e.clientX - lastTouchPos.x;
+                const dy = e.clientY - lastTouchPos.y;
+                offsetX += dx;
+                offsetY += dy;
+                lastTouchPos = { x: e.clientX, y: e.clientY };
+                applyTransform();
+            } else if (activePointers.size === 2) {
+                const pts = Array.from(activePointers.values());
+                const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                const oldZoom = zoom;
+                zoom = initialZoom * (dist / initialDistance);
+                // Center zoom on midpoint
+                const midX = (pts[0].x + pts[1].x) / 2;
+                const midY = (pts[0].y + pts[1].y) / 2;
+                offsetX = midX - (midX - offsetX) * (zoom / oldZoom);
+                offsetY = midY - (midY - offsetY) * (zoom / oldZoom);
+                applyTransform();
+            }
+        };
+
+        container.onpointerup = container.onpointercancel = (e) => {
+            const startPos = activePointers.get(e.pointerId);
+            const distMoved = startPos ? Math.hypot(e.clientX - startPos.x, e.clientY - startPos.y) : 100;
+
+            // 移動が少なければタップとみなす
+            if (distMoved < 5 && activePointers.size === 1) {
+                const rect = container.getBoundingClientRect();
+                handleTap({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+            }
+
+            activePointers.delete(e.pointerId);
+            if (activePointers.size === 0) isDragging = false;
+        };
+
+        function handleTap(pos) {
+            const worldX = (pos.x - offsetX) / zoom, worldY = (pos.y - offsetY) / zoom;
+            if (!selectionStart) {
+                selectionStart = { x: worldX, y: worldY };
+            } else {
+                completeSelection(worldX, worldY);
+            }
+            drawSelection();
+        }
+
+        function completeSelection(x2, y2) {
+            const x1 = selectionStart.x, y1 = selectionStart.y;
+            let pageIdx = 0, currentY = 0;
+            const minWorldY = Math.min(y1, y2);
+            for(let i=0; i<allPages.length; i++){
+                const h = allPages[i].height;
+                if(minWorldY >= currentY && minWorldY < currentY + h) { pageIdx = i; break; }
+                currentY += h;
+            }
+            const rect = { x: Math.min(x1, x2), y: minWorldY - currentY, w: Math.abs(x1 - x2), h: Math.abs(y1 - y2), pageIdx };
+            if (rect.w > 2) {
+                if (currentSettingMode === 'question') questions[activeQIdx].rect = rect;
+                else if (currentSettingMode === 'total') totalScoreRect = rect;
+                else if (currentSettingMode.startsWith('group-')) groupScoreRects[currentSettingMode.split('-')[1]] = rect;
+            }
+            selectionStart = null;
+        }
+
+        function drawSelection() {
+            const ctx = sCanvas.getContext('2d'); ctx.clearRect(0,0,sCanvas.width, sCanvas.height);
+            const getPageOffset = (idx) => { let y = 0; for(let i=0; i<idx; i++) y += allPages[i].height; return y; };
+            questions.forEach((q, i) => {
+                if (!q.rect) return;
+                const py = getPageOffset(q.rect.pageIdx);
+                ctx.strokeStyle = (i === activeQIdx && currentSettingMode === 'question') ? '#3b82f6' : 'rgba(148, 163, 184, 0.5)';
+                ctx.setLineDash((i === activeQIdx && currentSettingMode === 'question') ? [] : [5, 5]);
+                ctx.lineWidth = 4/zoom; ctx.strokeRect(q.rect.x, q.rect.y + py, q.rect.w, q.rect.h);
+            });
+            if (totalScoreRect) { const py = getPageOffset(totalScoreRect.pageIdx); ctx.strokeStyle = '#f59e0b'; ctx.setLineDash([]); ctx.lineWidth = 5/zoom; ctx.strokeRect(totalScoreRect.x, totalScoreRect.y + py, totalScoreRect.w, totalScoreRect.h); }
+            Object.keys(groupScoreRects).forEach(gid => { const r = groupScoreRects[gid]; const py = getPageOffset(r.pageIdx); ctx.strokeStyle = '#10b981'; ctx.setLineDash([]); ctx.lineWidth = 5/zoom; ctx.strokeRect(r.x, r.y + py, r.w, r.h); });
+            if (selectionStart) { ctx.fillStyle = '#3b82f6'; ctx.beginPath(); ctx.arc(selectionStart.x, selectionStart.y, 10/zoom, 0, Math.PI*2); ctx.fill(); }
+        }
+
+        // Scoring List Logic
+        function renderScoringList() {
+            const q = questions[activeQIdx]; 
+            document.getElementById('active-q-display').innerHTML = `${q.label} <span class="text-slate-400 font-medium text-sm ml-2">/ ${q.max} pts</span>`;
+            const list = document.getElementById('scoring-list'); list.innerHTML = '';
+            
+            students.forEach((s) => {
+                const card = document.createElement('div'); card.className = 'scoring-card';
+                const cropBox = document.createElement('div'); cropBox.className = 'crop-container';
+                const cropCanvas = document.createElement('canvas'); const rw = q.rect.w, rh = q.rect.h;
+                cropCanvas.width = rw; cropCanvas.height = rh;
+                
+                const targetPage = s.pages[q.rect.pageIdx];
+                if (targetPage) {
+                    cropCanvas.getContext('2d').drawImage(targetPage, q.rect.x, q.rect.y, rw, rh, 0, 0, rw, rh);
+                }
+                
+                cropBox.appendChild(cropCanvas);
+                const controls = document.createElement('div'); controls.className = 'score-controls';
+                controls.innerHTML = `<span class="text-[10px] font-black text-slate-300 uppercase mb-1 truncate tracking-tight">${s.name}</span><div class="flex items-end gap-2"><input type="number" step="any" inputmode="decimal" class="score-input" value="${s.scores[q.id] || ''}"><span class="text-slate-300 font-bold text-xs mb-2">/ ${q.max}</span></div>`;
+                
+                const input = controls.querySelector('input'); 
+                input.oninput = () => { s.scores[q.id] = input.value; updateGlobalStats(); };
+                
+                card.appendChild(cropBox); card.appendChild(controls); list.appendChild(card);
+            });
+            updateGlobalStats();
+        }
+
+        function updateGlobalStats() {
+            let totalEarned = 0, totalPossible = questions.reduce((a, b) => a + b.max, 0);
+            students.forEach(s => { questions.forEach(q => { totalEarned += (parseFloat(s.scores[q.id]) || 0); }); });
+            document.getElementById('total-avg').innerText = (totalEarned / (students.length || 1)).toFixed(1);
+            document.getElementById('total-max').innerText = totalPossible;
+            document.getElementById('stats-summary').classList.remove('hidden');
+        }
+
+        document.getElementById('go-to-scoring').onclick = () => { if (!questions.some(q => q.rect)) return alert("設問範囲を指定してください"); document.getElementById('step-2').classList.add('hidden'); document.getElementById('step-3').classList.remove('hidden'); renderScoringList(); };
+        function nextQuestion() { if (activeQIdx < questions.length - 1) { activeQIdx++; renderScoringList(); } }
+        function prevQuestion() { if (activeQIdx > 0) { activeQIdx--; renderScoringList(); } }
+        function backToSettings() { document.getElementById('step-3').classList.add('hidden'); document.getElementById('step-2').classList.remove('hidden'); drawSelection(); }
+
+        // PDF Export with Multi-Page Support (横向き対応)
+        async function exportGradedPDFs() {
+            const btn = document.getElementById('export-btn');
+            btn.innerText = "生成中..."; btn.disabled = true;
+            const zip = new JSZip();
+            try {
+                for (const s of students) {
+                    // ページごとの向き（縦・横）に合わせてjsPDFを初期化
+                    const firstPage = s.pages[0];
+                    const orientation = firstPage.width > firstPage.height ? 'l' : 'p';
+                    const doc = new jsPDF({ unit: 'pt', format: [firstPage.width, firstPage.height], orientation: orientation });
+                    
+                    for (let i = 0; i < s.pages.length; i++) {
+                        const page = s.pages[i];
+                        if (i > 0) {
+                            const pageOrientation = page.width > page.height ? 'l' : 'p';
+                            doc.addPage([page.width, page.height], pageOrientation);
+                        }
+                        doc.setPage(i + 1);
+                        doc.addImage(page.toDataURL('image/jpeg', 0.75), 'JPEG', 0, 0, page.width, page.height);
+                        
+                        questions.forEach(q => { 
+                            if (q.rect && q.rect.pageIdx === i && s.scores[q.id] !== undefined && s.scores[q.id] !== "") {
+                                drawMarkPDF(doc, s.scores[q.id], q.max, q.rect); 
+                            }
+                        });
+                        
+                        if (totalScoreRect && totalScoreRect.pageIdx === i) {
+                            const total = questions.reduce((sum, q) => sum + (parseFloat(s.scores[q.id]) || 0), 0);
+                            drawTotalMarkPDF(doc, total, totalScoreRect);
+                        }
+                        
+                        Object.keys(groupScoreRects).forEach(gid => {
+                            const r = groupScoreRects[gid];
+                            if(r.pageIdx === i) {
+                                const gTotal = questions.filter(q => q.group == gid).reduce((sum, q) => sum + (parseFloat(s.scores[q.id]) || 0), 0);
+                                drawTotalMarkPDF(doc, gTotal, r);
+                            }
+                        });
+                    }
+                    zip.file(`${s.name}.pdf`, doc.output('blob'));
+                }
+                const content = await zip.generateAsync({type:"blob"});
+                const link = document.createElement('a'); link.href = URL.createObjectURL(content); link.download = `Graded_PDFs_${Date.now()}.zip`; link.click();
+            } catch (e) { console.error(e); alert("保存中にエラーが発生しました"); }
+            btn.innerText = "全員分をZIPで保存"; btn.disabled = false;
+        }
+
+        function drawMarkPDF(doc, score, max, rect) {
+            const sc = parseFloat(score || 0), mx = parseFloat(max);
+            doc.setDrawColor(255, 0, 0); doc.setLineWidth(3);
+            const cx = rect.x + rect.w/2, cy = rect.y + rect.h/2, r = Math.min(rect.w, rect.h) * 0.45;
+            if (sc >= mx) doc.circle(cx, cy, r);
+            else if (sc <= 0) { doc.line(cx - r/2, cy, cx - r/4, cy + r/2); doc.line(cx - r/4, cy + r/2, cx + r/2, cy - r/2); }
+            else { 
+                doc.line(cx, cy - r, cx - r, cy + r); doc.line(cx - r, cy + r, cx + r, cy + r); doc.line(cx + r, cy + r, cx, cy - r);
+                doc.setFontSize(r * 0.8); doc.setTextColor(255, 0, 0); doc.text(`${sc}`, cx, cy + r/2, { align: 'center' });
+            }
+        }
+
+        function drawTotalMarkPDF(doc, score, rect) { 
+            doc.setDrawColor(255, 0, 0); doc.setLineWidth(4); doc.rect(rect.x, rect.y, rect.w, rect.h); 
+            const fs = Math.min(rect.w, rect.h) * 0.7; 
+            doc.setFontSize(fs); doc.setTextColor(255,0,0); 
+            doc.text(`${score}`, rect.x + rect.w/2, rect.y + rect.h/2 + fs/3, {align: 'center'}); 
+        }
+
+        function downloadCSV() {
+            let csv = "\uFEFFStudent,Question,Score,Max\n";
+            students.forEach(s => { questions.forEach(q => { csv += `${s.name},${q.label},${s.scores[q.id] || 0},${q.max}\n`; }); });
+            const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;' })); link.download = "scoring_results.csv"; link.click();
+        }
+    </script>
+</body>
+</html>
